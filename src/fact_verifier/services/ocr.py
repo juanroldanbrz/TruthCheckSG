@@ -47,7 +47,7 @@ async def analyze_image(image_bytes: bytes, content_type: str) -> ImageAnalysis 
                 }
             ],
             response_format=ImageAnalysis,
-            max_tokens=500,
+            max_completion_tokens=500,
         )
         if not response.choices:
             return None
