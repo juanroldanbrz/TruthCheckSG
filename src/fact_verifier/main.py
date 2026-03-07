@@ -117,6 +117,7 @@ async def verify(
                     )
                     event["share_id"] = share_id
                     event["has_image"] = raw_image_bytes is not None
+                    event["claim"] = claim
                 await queue.put(event)
         except Exception:
             await queue.put({"type": "error", "message": "error_generic"})

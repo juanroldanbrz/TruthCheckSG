@@ -293,12 +293,13 @@ document.getElementById('verify-form').addEventListener('submit', async e => {
   es.addEventListener('result', e => {
     es.close();
     const data = JSON.parse(e.data);
+    const resolvedClaim = data.claim || currentClaim;
     const imageSrc = data.has_image && imagePreview.src ? imagePreview.src : null;
-    renderResult(data.data || data, data.share_id, currentClaim, imageSrc);
+    renderResult(data.data || data, data.share_id, resolvedClaim, imageSrc);
     const resultData = data.data || data;
     const historyEntry = {
       id: crypto.randomUUID(),
-      claim: currentClaim,
+      claim: resolvedClaim,
       timestamp: new Date().toISOString(),
       verdict: resultData.verdict,
       summary: resultData.summary,
