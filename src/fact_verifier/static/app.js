@@ -215,6 +215,7 @@ function renderResult(data, shareId, claim, imageSrc) {
   badge.className = 'verdict-badge';
   badge.textContent = t('verdict_' + data.verdict);
   badge.classList.add('verdict-' + data.verdict);
+  document.getElementById('verdict-explanation').textContent = t('verdict_' + data.verdict + '_explanation');
 
   document.getElementById('result-summary').textContent = data.summary || '';
   document.getElementById('result-explanation').textContent = data.explanation || '';
