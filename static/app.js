@@ -1,0 +1,192 @@
+const I18N = JSON.parse(document.getElementById('i18n-data').textContent);
+let currentLang = 'en';
+
+function t(key) {
+  return (I18N[currentLang] && I18N[currentLang][key]) || I18N['en'][key] || key;
+}
+
+function setLang(lang) {
+  currentLang = lang;
+  document.getElementById('language-input').value = lang;
+
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.lang === lang);
+  });
+
+  document.getElementById('app-title').textContent = t('app_title');
+  document.getElementById('app-subtitle').textContent = t('app_subtitle');
+  document.getElementById('claim-input').placeholder = t('input_placeholder');
+  document.getElementById('upload-label').textContent = t('upload_label');
+  document.getElementById('submit-btn').textContent = t('submit_button');
+  document.getElementById('checking-message').textContent = t('checking_message');
+  document.getElementById('step-1-label').textContent = t('step_1');
+  document.getElementById('step-2-label').textContent = t('step_2');
+  document.getElementById('step-3-label').textContent = t('step_3');
+  document.getElementById('reset-btn').textContent = t('reset_button');
+  document.getElementById('error-reset-btn').textContent = t('reset_button');
+}
+
+// Language switcher
+document.querySelectorAll('.lang-btn').forEach(btn => {
+  btn.addEventListener('click', () => setLang(btn.dataset.lang));
+});
+
+// Image upload
+const uploadArea = document.getElementById('upload-area');
+const imageInput = document.getElementById('image-input');
+const previewContainer = document.getElementById('preview-container');
+const imagePreview = document.getElementById('image-preview');
+
+uploadArea.addEventListener('click', () => imageInput.click());
+uploadArea.addEventListener('dragover', e => {
+  e.preventDefault();
+  uploadArea.style.borderColor = '#1e293b';
+});
+uploadArea.addEventListener('dragleave', () => {
+  uploadArea.style.borderColor = '';
+});
+uploadArea.addEventListener('drop', e => {
+  e.preventDefault();
+  const file = e.dataTransfer.files[0];
+  if (file) handleImageFile(file);
+});
+
+imageInput.addEventListener('change', () => {
+  if (imageInput.files[0]) handleImageFile(imageInput.files[0]);
+});
+
+function handleImageFile(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    imagePreview.src = e.target.result;
+    previewContainer.hidden = false;
+    document.getElementById('upload-label').hidden = true;
+  };
+  reader.readAsDataURL(file);
+}
+
+document.getElementById('clear-image').addEventListener('click', e => {
+  e.stopPropagation();
+  imageInput.value = '';
+  previewContainer.hidden = true;
+  document.getElementById('upload-label').hidden = false;
+});
+
+// State management
+function showState(name) {
+  ['input', 'loading', 'result', 'error'].forEach(s => {
+    document.getElementById('state-' + s).hidden = s !== name;
+  });
+}
+
+function setStep(active) {
+  for (let i = 1; i <= 3; i++) {
+    const el = document.getElementById('step-' + i);
+    el.classList.remove('done', 'active');
+    if (i < active) {
+      el.querySelector('.step-icon').textContent = '\u2705';
+    } else if (i === active) {
+      el.querySelector('.step-icon').textContent = '\u23F3';
+      el.classList.add('active');
+    } else {
+      el.querySelector('.step-icon').textContent = '\u25CB';
+    }
+  }
+}
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function renderResult(data) {
+  const badge = document.getElementById('verdict-badge');
+  badge.className = 'verdict-badge';
+  badge.textContent = t('verdict_' + data.verdict);
+  badge.classList.add('verdict-' + data.verdict);
+
+  document.getElementById('result-summary').textContent = data.summary || '';
+  document.getElementById('result-explanation').textContent = data.explanation || '';
+  document.getElementById('sources-title').textContent = t('sources_title');
+
+  const list = document.getElementById('sources-list');
+  list.innerHTML = '';
+  (data.sources || []).forEach(source => {
+    const card = document.createElement('div');
+    card.className = 'source-card';
+    const tierLabel = t('tier_' + source.tier) || source.tier;
+    const stanceLabel = t('stance_' + source.stance) || source.stance;
+    card.innerHTML =
+      '<div class="source-header">' +
+        '<span class="tier-badge tier-' + escHtml(source.tier) + '">' + escHtml(tierLabel) + '</span>' +
+        '<span class="stance-tag stance-' + escHtml(source.stance) + '">' + escHtml(stanceLabel) + '</span>' +
+      '</div>' +
+      '<div class="source-title">' + escHtml(source.title || '') + '</div>' +
+      '<div class="source-url"><a href="' + escHtml(source.url) + '" target="_blank" rel="noopener noreferrer">' + escHtml(source.url) + '</a></div>' +
+      '<div class="source-snippet">' + escHtml(source.snippet || '') + '</div>';
+    list.appendChild(card);
+  });
+}
+
+// Form submission
+document.getElementById('verify-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const errorEl = document.getElementById('form-error');
+  errorEl.hidden = true;
+
+  const text = document.getElementById('claim-input').value.trim();
+  const hasImage = imageInput.files.length > 0;
+  if (!text && !hasImage) {
+    errorEl.textContent = t('error_empty');
+    errorEl.hidden = false;
+    return;
+  }
+
+  const formData = new FormData(e.target);
+  showState('loading');
+  setStep(1);
+
+  let taskId;
+  try {
+    const res = await fetch('/verify', { method: 'POST', body: formData });
+    const json = await res.json();
+    if (json.error) throw new Error(json.error);
+    taskId = json.task_id;
+  } catch (err) {
+    showState('error');
+    document.getElementById('error-message').textContent = t('error_generic');
+    return;
+  }
+
+  const es = new EventSource('/stream/' + taskId);
+
+  es.addEventListener('progress', e => {
+    const data = JSON.parse(e.data);
+    setStep(data.step);
+  });
+
+  es.addEventListener('result', e => {
+    es.close();
+    const data = JSON.parse(e.data);
+    renderResult(data.data || data);
+    showState('result');
+  });
+
+  es.addEventListener('error', e => {
+    es.close();
+    let msg = t('error_generic');
+    try { msg = t(JSON.parse(e.data).message) || msg; } catch (_) {}
+    document.getElementById('error-message').textContent = msg;
+    showState('error');
+  });
+});
+
+// Reset buttons
+document.getElementById('reset-btn').addEventListener('click', () => showState('input'));
+document.getElementById('error-reset-btn').addEventListener('click', () => showState('input'));
+
+// Initialise with English
+setLang('en');
