@@ -51,7 +51,9 @@ Given a user input, determine:
 2. If yes, generate an optimised web search query to find evidence for or against it
 
 NOT a verifiable claim: questions ("how do I..."), recipes, opinions, greetings, nonsense.
-IS a verifiable claim: statements asserting facts ("X is Y", "X happened", "X costs Y")."""
+IS a verifiable claim: statements asserting facts ("X is Y", "X happened", "X costs Y")
+
+Always write search_query in English, regardless of the language of the input."""
 
 PARSE_CLAIM_SCHEMA = {
     "type": "json_schema",
