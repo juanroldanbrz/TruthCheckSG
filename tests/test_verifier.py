@@ -38,7 +38,7 @@ async def test_verify_returns_structured_result():
         mock_create.return_value = mock_response
         from fact_verifier.services.verifier import verify_claim
         result = await verify_claim("CPF age raised to 70", MOCK_SOURCES, "en")
-        assert result["verdict"] in ("verified", "false", "unverified")
+        assert result["verdict"] in ("true", "likely_true", "false", "likely_false", "unverified")
         assert "summary" in result
         assert "explanation" in result
         assert "sources" in result

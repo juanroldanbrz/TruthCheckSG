@@ -52,7 +52,7 @@ async def test_pipeline_emits_three_progress_steps():
             {"url": "https://www.moh.gov.sg/a", "markdown": "Content here"}
         ]
         mock_verify.return_value = {
-            "verdict": "verified",
+            "verdict": "true",
             "summary": "True.",
             "explanation": "Details.",
             "sources": [],
