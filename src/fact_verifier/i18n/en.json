@@ -9,6 +9,8 @@
   "step_2": "Reading articles...",
   "step_3": "Analysing facts...",
   "verdict_verified": "VERIFIED",
+  "verdict_likely_true": "LIKELY TRUE",
+  "verdict_likely_false": "LIKELY FALSE",
   "verdict_false": "FALSE",
   "verdict_unverified": "UNVERIFIED",
   "sources_title": "Sources checked",

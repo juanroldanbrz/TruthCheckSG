@@ -9,6 +9,8 @@
   "step_2": "正在阅读文章...",
   "step_3": "正在分析事实...",
   "verdict_verified": "已核实",
+  "verdict_likely_true": "可能属实",
+  "verdict_likely_false": "可能错误",
   "verdict_false": "错误",
   "verdict_unverified": "无法核实",
   "sources_title": "已核查来源",

@@ -9,6 +9,8 @@
   "step_2": "Membaca artikel...",
   "step_3": "Menganalisis fakta...",
   "verdict_verified": "DISAHKAN",
+  "verdict_likely_true": "MUNGKIN BENAR",
+  "verdict_likely_false": "MUNGKIN PALSU",
   "verdict_false": "PALSU",
   "verdict_unverified": "TIDAK DAPAT DISAHKAN",
   "sources_title": "Sumber yang disemak",

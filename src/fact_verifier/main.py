@@ -70,6 +70,8 @@ async def verify(
     image: UploadFile = File(default=None),
 ):
     claim = text.strip()
+    raw_image_bytes: bytes | None = None
+    raw_image_content_type: str | None = None
     pipeline_image_bytes: bytes | None = None
     pipeline_image_content_type: str | None = None
 
@@ -78,6 +80,8 @@ async def verify(
         if image.content_type not in ALLOWED_IMAGE_TYPES:
             return JSONResponse({"error": "error_no_text"}, status_code=422)
         image_bytes = await image.read()
+        raw_image_bytes = image_bytes
+        raw_image_content_type = image.content_type
         if claim:
             # Text query + image: keep text as claim, pass image as visual context
             pipeline_image_bytes = image_bytes
@@ -108,11 +112,11 @@ async def verify(
                 if event.get("type") == "result":
                     share_id = await save_verification(
                         claim, language, event["data"],
-                        image_bytes=pipeline_image_bytes,
-                        image_content_type=pipeline_image_content_type,
+                        image_bytes=raw_image_bytes,
+                        image_content_type=raw_image_content_type,
                     )
                     event["share_id"] = share_id
-                    event["has_image"] = pipeline_image_bytes is not None
+                    event["has_image"] = raw_image_bytes is not None
                 await queue.put(event)
         except Exception:
             await queue.put({"type": "error", "message": "error_generic"})

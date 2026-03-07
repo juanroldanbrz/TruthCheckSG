@@ -90,7 +90,6 @@ main {
   min-width: 0;
   max-width: 720px;
   width: 100%;
-  margin: 0 auto;
   padding: 36px 24px;
 }
 
@@ -256,9 +255,11 @@ textarea:focus {
   margin-bottom: 28px;
   background: var(--card-bg);
 }
-.verdict-card:has(.verdict-verified)   { border-left-color: var(--green);  background: #f0fdf4; }
-.verdict-card:has(.verdict-false)      { border-left-color: var(--red);    background: #fff5f5; }
-.verdict-card:has(.verdict-unverified) { border-left-color: var(--yellow); background: #fefce8; }
+.verdict-card:has(.verdict-verified)     { border-left-color: var(--green);  background: #f0fdf4; }
+.verdict-card:has(.verdict-likely_true)  { border-left-color: #65a30d;       background: #f7fee7; }
+.verdict-card:has(.verdict-likely_false) { border-left-color: #ea580c;       background: #fff7ed; }
+.verdict-card:has(.verdict-false)        { border-left-color: var(--red);    background: #fff5f5; }
+.verdict-card:has(.verdict-unverified)   { border-left-color: var(--yellow); background: #fefce8; }
 
 .verdict-badge {
   display: inline-block;
@@ -270,9 +271,11 @@ textarea:focus {
   letter-spacing: 1.5px;
   text-transform: uppercase;
 }
-.verdict-verified   { background: #dcfce7; color: var(--green); }
-.verdict-false      { background: #fee2e2; color: var(--red); }
-.verdict-unverified { background: #fef9c3; color: var(--yellow); }
+.verdict-verified     { background: #dcfce7; color: var(--green); }
+.verdict-likely_true  { background: #ecfccb; color: #65a30d; }
+.verdict-likely_false { background: #ffedd5; color: #ea580c; }
+.verdict-false        { background: #fee2e2; color: var(--red); }
+.verdict-unverified   { background: #fef9c3; color: var(--yellow); }
 
 .result-summary {
   font-family: 'Source Serif 4', Georgia, serif;
@@ -353,6 +356,7 @@ h2 {
   display: flex;
   align-items: flex-start;
   gap: 24px;
+  flex: 1;
   max-width: 1200px;
   margin: 0 auto;
   padding: 16px;

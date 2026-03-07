@@ -26,7 +26,7 @@ VERIFY_SCHEMA = {
         "schema": {
             "type": "object",
             "properties": {
-                "verdict": {"type": "string", "enum": ["verified", "false", "unverified"]},
+                "verdict": {"type": "string", "enum": ["verified", "likely_true", "likely_false", "false", "unverified"]},
                 "summary": {"type": "string"},
                 "explanation": {"type": "string"},
                 "sources": {
