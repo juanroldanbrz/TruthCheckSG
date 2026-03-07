@@ -119,7 +119,7 @@ async def describe_image(image_bytes: bytes, image_content_type: str) -> str:
             {"type": "text", "text": "Describe what this image is about in one concise sentence."},
             {"type": "image_url", "image_url": {"url": f"data:{image_content_type};base64,{b64}"}},
         ]}],
-        max_completion_tokens=128000,
+        max_completion_tokens=settings.max_output_tokens,
         response_format=ImageDescription,
     )
     if not response.choices:
@@ -144,7 +144,7 @@ async def parse_claim(
             {"role": "system", "content": system},
             {"role": "user", "content": user_content},
         ],
-        max_completion_tokens=128000,
+        max_completion_tokens=settings.max_output_tokens,
         response_format=ClaimParseResult,
     )
     if not response.choices:
@@ -173,7 +173,7 @@ async def verify_claim(
             {"role": "system", "content": system},
             {"role": "user", "content": user_content},
         ],
-        max_completion_tokens=128000,
+        max_completion_tokens=settings.max_output_tokens,
         response_format=FactCheckResult,
     )
     if not response.choices:

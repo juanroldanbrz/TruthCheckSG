@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     langfuse_public_key: str = ""
     langfuse_host: str = "http://localhost:3000"
     openai_model: str = "gpt-5-mini-2025-08-07"
+    max_output_tokens: int = 5000
 
     model_config = {"env_file": ".env"}
 
