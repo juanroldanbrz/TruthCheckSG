@@ -7,7 +7,7 @@ async def test_pipeline_emits_progress_and_result_events():
     events = []
 
     with patch("fact_verifier.services.pipeline.parse_claim", new_callable=AsyncMock) as mock_parse, \
-         patch("fact_verifier.services.pipeline.brave_search", new_callable=AsyncMock) as mock_search, \
+         patch("fact_verifier.services.pipeline.brave_search_with_site_bias", new_callable=AsyncMock) as mock_search, \
          patch("fact_verifier.services.pipeline.fetch_all", new_callable=AsyncMock) as mock_fetch, \
          patch("fact_verifier.services.pipeline.verify_claim", new_callable=AsyncMock) as mock_verify:
         mock_parse.return_value = {"is_relevant": True, "search_query": "CPF withdrawal age"}
@@ -40,7 +40,7 @@ async def test_pipeline_emits_three_progress_steps():
     events = []
 
     with patch("fact_verifier.services.pipeline.parse_claim", new_callable=AsyncMock) as mock_parse, \
-         patch("fact_verifier.services.pipeline.brave_search", new_callable=AsyncMock) as mock_search, \
+         patch("fact_verifier.services.pipeline.brave_search_with_site_bias", new_callable=AsyncMock) as mock_search, \
          patch("fact_verifier.services.pipeline.fetch_all", new_callable=AsyncMock) as mock_fetch, \
          patch("fact_verifier.services.pipeline.verify_claim", new_callable=AsyncMock) as mock_verify:
         mock_parse.return_value = {"is_relevant": True, "search_query": "CPF withdrawal age"}
@@ -74,7 +74,7 @@ async def test_pipeline_emits_error_on_no_search_results():
     events = []
 
     with patch("fact_verifier.services.pipeline.parse_claim", new_callable=AsyncMock) as mock_parse, \
-         patch("fact_verifier.services.pipeline.brave_search", new_callable=AsyncMock) as mock_search, \
+         patch("fact_verifier.services.pipeline.brave_search_with_site_bias", new_callable=AsyncMock) as mock_search, \
          patch("fact_verifier.services.pipeline.fetch_all", new_callable=AsyncMock) as mock_fetch:
 
         mock_parse.return_value = {"is_relevant": True, "search_query": "obscure claim"}
@@ -93,7 +93,7 @@ async def test_pipeline_emits_error_on_no_search_results():
 async def test_pipeline_passes_image_to_parse_claim():
     """run_pipeline must pass image_bytes and image_content_type to parse_claim."""
     with patch("fact_verifier.services.pipeline.parse_claim", new_callable=AsyncMock) as mock_parse, \
-         patch("fact_verifier.services.pipeline.brave_search", new_callable=AsyncMock) as mock_search, \
+         patch("fact_verifier.services.pipeline.brave_search_with_site_bias", new_callable=AsyncMock) as mock_search, \
          patch("fact_verifier.services.pipeline.fetch_all", new_callable=AsyncMock) as mock_fetch, \
          patch("fact_verifier.services.pipeline.verify_claim", new_callable=AsyncMock) as mock_verify:
 
@@ -113,7 +113,7 @@ async def test_pipeline_passes_image_to_parse_claim():
 async def test_pipeline_passes_image_to_verify_claim():
     """run_pipeline must pass image_bytes and image_content_type to verify_claim."""
     with patch("fact_verifier.services.pipeline.parse_claim", new_callable=AsyncMock) as mock_parse, \
-         patch("fact_verifier.services.pipeline.brave_search", new_callable=AsyncMock) as mock_search, \
+         patch("fact_verifier.services.pipeline.brave_search_with_site_bias", new_callable=AsyncMock) as mock_search, \
          patch("fact_verifier.services.pipeline.fetch_all", new_callable=AsyncMock) as mock_fetch, \
          patch("fact_verifier.services.pipeline.verify_claim", new_callable=AsyncMock) as mock_verify:
 
@@ -136,7 +136,7 @@ async def test_pipeline_emits_error_on_verify_exception():
     events = []
 
     with patch("fact_verifier.services.pipeline.parse_claim", new_callable=AsyncMock) as mock_parse, \
-         patch("fact_verifier.services.pipeline.brave_search", new_callable=AsyncMock) as mock_search, \
+         patch("fact_verifier.services.pipeline.brave_search_with_site_bias", new_callable=AsyncMock) as mock_search, \
          patch("fact_verifier.services.pipeline.fetch_all", new_callable=AsyncMock) as mock_fetch, \
          patch("fact_verifier.services.pipeline.verify_claim", new_callable=AsyncMock) as mock_verify:
 

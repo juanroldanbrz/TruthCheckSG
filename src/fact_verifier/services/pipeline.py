@@ -1,8 +1,9 @@
 import asyncio
 from typing import AsyncGenerator
-from fact_verifier.services.search import brave_search
+from fact_verifier.services.search import brave_search_with_site_bias
 from fact_verifier.services.scraper import fetch_all
 from fact_verifier.services.verifier import verify_claim, parse_claim
+from fact_verifier.config import settings
 from fact_verifier.services.tier import classify_tier
 
 
@@ -27,13 +28,19 @@ async def run_pipeline(
 
     yield {"type": "progress", "step": 1, "message": "step_1"}
 
-    search_results = await brave_search(search_query)
+    search_results = await brave_search_with_site_bias(
+        search_query, count=settings.max_sources, prefer_site=settings.search_prefer_site
+    )
     if not search_results:
         yield {"type": "error", "message": "error_generic"}
         return
 
     for r in search_results:
         r["tier"] = classify_tier(r["url"])
+
+    # Prefer government, then news, then other (bias toward authoritative sources)
+    tier_order = {"government": 0, "news": 1, "other": 2}
+    search_results.sort(key=lambda r: tier_order.get(r["tier"], 2))
 
     yield {"type": "progress", "step": 2, "message": "step_2"}
 
