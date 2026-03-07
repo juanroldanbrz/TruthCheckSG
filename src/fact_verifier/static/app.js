@@ -33,6 +33,89 @@ document.querySelectorAll('.lang-btn').forEach(btn => {
   btn.addEventListener('click', () => setLang(btn.dataset.lang));
 });
 
+// --- History ---
+const HISTORY_KEY = 'truthcheck_history';
+const HISTORY_MAX = 50;
+
+function loadHistory() {
+  try {
+    return JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
+  } catch (_) {
+    return [];
+  }
+}
+
+function saveHistory(entries) {
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(entries));
+}
+
+function addHistoryEntry(entry) {
+  const entries = loadHistory();
+  entries.unshift(entry);
+  if (entries.length > HISTORY_MAX) entries.splice(HISTORY_MAX);
+  saveHistory(entries);
+}
+
+function clearHistory() {
+  localStorage.removeItem(HISTORY_KEY);
+}
+
+function relativeTime(isoString) {
+  const diff = Math.floor((Date.now() - new Date(isoString)) / 1000);
+  if (diff < 60) return 'just now';
+  if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+  if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+  return Math.floor(diff / 86400) + 'd ago';
+}
+
+let activeHistoryId = null;
+
+function renderHistorySidebar() {
+  const entries = loadHistory();
+  const list = document.getElementById('history-list');
+  list.innerHTML = '';
+
+  if (entries.length === 0) {
+    list.innerHTML = '<p class="history-empty">No history yet.</p>';
+    return;
+  }
+
+  entries.forEach(entry => {
+    const div = document.createElement('div');
+    div.className = 'history-entry' + (entry.id === activeHistoryId ? ' active' : '');
+    div.dataset.id = entry.id;
+
+    const verdictClass = 'verdict-badge verdict-' + entry.verdict;
+    div.innerHTML =
+      '<div class="history-entry-claim">' + escHtml(entry.claim) + '</div>' +
+      '<div class="history-entry-meta">' +
+        '<span class="' + escHtml(verdictClass) + '" style="font-size:10px;padding:1px 4px">' + escHtml(entry.verdict) + '</span>' +
+        '<span class="history-entry-time">' + relativeTime(entry.timestamp) + '</span>' +
+      '</div>';
+
+    div.addEventListener('click', () => {
+      activeHistoryId = entry.id;
+      renderHistorySidebar();
+      currentClaim = entry.claim;
+      renderResult(
+        { verdict: entry.verdict, summary: entry.summary, explanation: entry.explanation, sources: entry.sources },
+        entry.shareId,
+        entry.claim,
+        null
+      );
+      showState('result');
+    });
+
+    list.appendChild(div);
+  });
+}
+
+document.getElementById('clear-history-btn').addEventListener('click', () => {
+  clearHistory();
+  activeHistoryId = null;
+  renderHistorySidebar();
+});
+
 // Image upload
 const uploadArea = document.getElementById('upload-area');
 const imageInput = document.getElementById('image-input');
@@ -211,6 +294,20 @@ document.getElementById('verify-form').addEventListener('submit', async e => {
     const data = JSON.parse(e.data);
     const imageSrc = data.has_image && imagePreview.src ? imagePreview.src : null;
     renderResult(data.data || data, data.share_id, currentClaim, imageSrc);
+    const resultData = data.data || data;
+    const historyEntry = {
+      id: crypto.randomUUID(),
+      claim: currentClaim,
+      timestamp: new Date().toISOString(),
+      verdict: resultData.verdict,
+      summary: resultData.summary,
+      explanation: resultData.explanation,
+      sources: resultData.sources || [],
+      shareId: data.share_id || null,
+    };
+    addHistoryEntry(historyEntry);
+    activeHistoryId = historyEntry.id;
+    renderHistorySidebar();
     showState('result');
   });
 
@@ -239,6 +336,7 @@ document.getElementById('share-btn').addEventListener('click', () => {
 });
 
 // Initialise with English
+renderHistorySidebar();
 setLang('en');
 
 // Auto-display shared result when navigating to /share/<id>
