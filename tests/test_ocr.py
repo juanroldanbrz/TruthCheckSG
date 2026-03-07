@@ -1,36 +1,31 @@
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 
 @pytest.mark.asyncio
-async def test_extract_text_from_image_returns_string():
-    mock_response = MagicMock()
-    mock_response.choices[0].message.content = "CPF withdrawal age raised to 65"
+async def test_analyze_image_returns_ocr_and_intent():
+    mock_analysis = MagicMock()
+    mock_analysis.ocr_text = "I am a real estate agent"
+    mock_analysis.intent = "Promote a paid course to become a millionaire"
 
-    with patch("fact_verifier.services.ocr.client.chat.completions.create", new_callable=AsyncMock) as mock_create:
-        mock_create.return_value = mock_response
-        from fact_verifier.services.ocr import extract_text_from_image
-        result = await extract_text_from_image(b"fake_image_bytes", "image/png")
-        assert isinstance(result, str)
-        assert len(result) > 0
+    mock_parsed = MagicMock()
+    mock_parsed.choices = [MagicMock(message=MagicMock(parsed=mock_analysis))]
 
+    with patch("fact_verifier.services.ocr.client") as mock_client:
+        mock_client.beta.chat.completions.parse = AsyncMock(return_value=mock_parsed)
+        from fact_verifier.services.ocr import analyze_image
+        result = await analyze_image(b"fake-bytes", "image/jpeg")
 
-@pytest.mark.asyncio
-async def test_extract_text_returns_none_on_empty_response():
-    mock_response = MagicMock()
-    mock_response.choices[0].message.content = ""
-
-    with patch("fact_verifier.services.ocr.client.chat.completions.create", new_callable=AsyncMock) as mock_create:
-        mock_create.return_value = mock_response
-        from fact_verifier.services.ocr import extract_text_from_image
-        result = await extract_text_from_image(b"fake_image_bytes", "image/png")
-        assert result is None
+    assert result is not None
+    assert result.ocr_text == "I am a real estate agent"
+    assert result.intent == "Promote a paid course to become a millionaire"
 
 
 @pytest.mark.asyncio
-async def test_extract_text_returns_none_on_api_error():
-    with patch("fact_verifier.services.ocr.client.chat.completions.create", new_callable=AsyncMock) as mock_create:
-        mock_create.side_effect = Exception("API timeout")
-        from fact_verifier.services.ocr import extract_text_from_image
-        result = await extract_text_from_image(b"fake_image_bytes", "image/png")
-        assert result is None
+async def test_analyze_image_returns_none_on_exception():
+    with patch("fact_verifier.services.ocr.client") as mock_client:
+        mock_client.beta.chat.completions.parse = AsyncMock(side_effect=Exception("API error"))
+        from fact_verifier.services.ocr import analyze_image
+        result = await analyze_image(b"fake-bytes", "image/jpeg")
+
+    assert result is None
