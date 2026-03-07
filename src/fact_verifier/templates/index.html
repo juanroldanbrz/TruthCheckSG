@@ -23,82 +23,94 @@
     </div>
   </header>
 
-  <main>
-    <!-- State 1: Input -->
-    <section id="state-input">
-      <h1 id="app-title"></h1>
-      <p id="app-subtitle"></p>
+  <div class="app-layout">
+    <aside id="history-sidebar">
+      <div class="history-header">
+        <span class="history-title">History</span>
+        <button id="clear-history-btn" class="btn-ghost">Clear all</button>
+      </div>
+      <div id="history-list">
+        <p class="history-empty">No history yet.</p>
+      </div>
+    </aside>
 
-      <form id="verify-form" enctype="multipart/form-data">
-        <textarea id="claim-input" name="text" rows="5" maxlength="2000"></textarea>
+    <main>
+      <!-- State 1: Input -->
+      <section id="state-input">
+        <h1 id="app-title"></h1>
+        <p id="app-subtitle"></p>
 
-        <div class="upload-area" id="upload-area">
-          <label for="image-input" id="upload-label"></label>
-          <input type="file" id="image-input" name="image" accept="image/png,image/jpeg,image/webp" hidden />
-          <div id="preview-container" hidden>
-            <img id="image-preview" src="" alt="preview" />
-            <button type="button" id="clear-image">&#x2715;</button>
+        <form id="verify-form" enctype="multipart/form-data">
+          <textarea id="claim-input" name="text" rows="5" maxlength="2000"></textarea>
+
+          <div class="upload-area" id="upload-area">
+            <label for="image-input" id="upload-label"></label>
+            <input type="file" id="image-input" name="image" accept="image/png,image/jpeg,image/webp" hidden />
+            <div id="preview-container" hidden>
+              <img id="image-preview" src="" alt="preview" />
+              <button type="button" id="clear-image">&#x2715;</button>
+            </div>
+          </div>
+
+          <input type="hidden" name="language" id="language-input" value="en" />
+          <button type="submit" id="submit-btn" class="btn-primary"></button>
+          <p id="form-error" class="error-msg" hidden></p>
+        </form>
+      </section>
+
+      <!-- State 2: Loading -->
+      <section id="state-loading" hidden>
+        <div class="steps-container">
+          <div class="step" id="step-1">
+            <span class="step-icon">&#x25CB;</span>
+            <span class="step-label" id="step-1-label"></span>
+          </div>
+          <div class="step" id="step-2">
+            <span class="step-icon">&#x25CB;</span>
+            <span class="step-label" id="step-2-label"></span>
+          </div>
+          <div class="step" id="step-3">
+            <span class="step-icon">&#x25CB;</span>
+            <span class="step-label" id="step-3-label"></span>
           </div>
         </div>
+        <p id="checking-message"></p>
+      </section>
 
-        <input type="hidden" name="language" id="language-input" value="en" />
-        <button type="submit" id="submit-btn" class="btn-primary"></button>
-        <p id="form-error" class="error-msg" hidden></p>
-      </form>
-    </section>
+      <!-- State 3: Result -->
+      <section id="state-result" hidden>
 
-    <!-- State 2: Loading -->
-    <section id="state-loading" hidden>
-      <div class="steps-container">
-        <div class="step" id="step-1">
-          <span class="step-icon">&#x25CB;</span>
-          <span class="step-label" id="step-1-label"></span>
+        <div class="result-claim-card">
+          <span class="result-claim-label">Claim checked</span>
+          <p id="result-claim" class="result-claim"></p>
         </div>
-        <div class="step" id="step-2">
-          <span class="step-icon">&#x25CB;</span>
-          <span class="step-label" id="step-2-label"></span>
+
+        <div class="verdict-card">
+          <div id="verdict-badge" class="verdict-badge"></div>
+          <p id="result-summary" class="result-summary"></p>
+          <p id="result-explanation" class="result-explanation"></p>
         </div>
-        <div class="step" id="step-3">
-          <span class="step-icon">&#x25CB;</span>
-          <span class="step-label" id="step-3-label"></span>
+
+        <div class="sources-section">
+          <h2 id="sources-title"></h2>
+          <div id="sources-list"></div>
         </div>
-      </div>
-      <p id="checking-message"></p>
-    </section>
 
-    <!-- State 3: Result -->
-    <section id="state-result" hidden>
+        <div id="share-container" hidden>
+          <input type="text" id="share-url" readonly />
+          <button id="share-btn" class="btn-secondary"></button>
+        </div>
 
-      <div class="result-claim-card">
-        <span class="result-claim-label">Claim checked</span>
-        <p id="result-claim" class="result-claim"></p>
-      </div>
+        <button id="reset-btn" class="btn-secondary"></button>
+      </section>
 
-      <div class="verdict-card">
-        <div id="verdict-badge" class="verdict-badge"></div>
-        <p id="result-summary" class="result-summary"></p>
-        <p id="result-explanation" class="result-explanation"></p>
-      </div>
-
-      <div class="sources-section">
-        <h2 id="sources-title"></h2>
-        <div id="sources-list"></div>
-      </div>
-
-      <div id="share-container" hidden>
-        <input type="text" id="share-url" readonly />
-        <button id="share-btn" class="btn-secondary"></button>
-      </div>
-
-      <button id="reset-btn" class="btn-secondary"></button>
-    </section>
-
-    <!-- State 4: Error -->
-    <section id="state-error" hidden>
-      <p id="error-message" class="error-msg"></p>
-      <button id="error-reset-btn" class="btn-secondary"></button>
-    </section>
-  </main>
+      <!-- State 4: Error -->
+      <section id="state-error" hidden>
+        <p id="error-message" class="error-msg"></p>
+        <button id="error-reset-btn" class="btn-secondary"></button>
+      </section>
+    </main>
+  </div>
 
   <footer>
     <p class="footer-disclaimer">
