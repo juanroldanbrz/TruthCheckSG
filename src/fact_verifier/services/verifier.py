@@ -55,12 +55,15 @@ VERIFY_SCHEMA = {
 PARSE_CLAIM_PROMPT = """You are a pre-processing agent for a fact-checking system.
 
 Given a user input, determine:
-1. Whether it is a verifiable factual claim (a statement asserting something is true)
+1. Whether it is a verifiable factual claim or an investigative question about provided content
 2. If yes, generate an optimised web search query to find evidence for or against it
 
-NOT a verifiable claim: questions ("how do I..."), recipes, opinions, greetings, nonsense.
-IS a verifiable claim: statements asserting facts ("X is Y", "X happened", "X costs Y")
+NOT relevant: generic questions ("how do I..."), recipes, greetings, nonsense with no image context.
+IS relevant: statements asserting facts ("X is Y", "X happened") OR questions about an uploaded image
+  (e.g. "is this a scam?", "is this investment legitimate?", "is this real?") — the image provides
+  the factual content being investigated.
 
+When an image is provided alongside a question, treat the combination as a verifiable investigation.
 Always write search_query in {language}."""
 
 PARSE_CLAIM_SCHEMA = {
@@ -98,15 +101,40 @@ def _build_sources_text(sources: list[dict]) -> str:
     return "\n\n---\n\n".join(parts)
 
 
-async def parse_claim(claim: str, language: str = "en") -> dict:
+def _strip_fenced_json(content: str) -> str:
+    content = content.strip()
+    if content.startswith("```"):
+        lines = content.splitlines()
+        return "\n".join(lines[1:-1]).strip()
+    return content
+
+
+def _build_user_content(text: str, image_bytes: bytes | None, image_content_type: str | None) -> str | list:
+    if not image_bytes or not image_content_type:
+        return text
+    import base64
+    b64 = base64.b64encode(image_bytes).decode("utf-8")
+    return [
+        {"type": "text", "text": text},
+        {"type": "image_url", "image_url": {"url": f"data:{image_content_type};base64,{b64}"}},
+    ]
+
+
+async def parse_claim(
+    claim: str,
+    language: str = "en",
+    image_bytes: bytes | None = None,
+    image_content_type: str | None = None,
+) -> dict:
     lang_name = LANGUAGE_NAMES.get(language, "English")
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     system = PARSE_CLAIM_PROMPT.format(language=lang_name) + f"\n\nCurrent timestamp: {now}"
+    user_content = _build_user_content(claim, image_bytes, image_content_type)
     response = await client.chat.completions.create(
         model="gpt-4o",
         messages=[
             {"role": "system", "content": system},
-            {"role": "user", "content": claim},
+            {"role": "user", "content": user_content},
         ],
         max_tokens=200,
         temperature=0,
@@ -115,21 +143,28 @@ async def parse_claim(claim: str, language: str = "en") -> dict:
     if not response.choices:
         raise ValueError("OpenAI returned empty choices list")
     import json
-    return json.loads(response.choices[0].message.content)
+    return json.loads(_strip_fenced_json(response.choices[0].message.content))
 
 
-async def verify_claim(claim: str, sources: list[dict], language: str = "en") -> dict:
+async def verify_claim(
+    claim: str,
+    sources: list[dict],
+    language: str = "en",
+    image_bytes: bytes | None = None,
+    image_content_type: str | None = None,
+) -> dict:
     lang_name = LANGUAGE_NAMES.get(language, "English")
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     system = SYSTEM_PROMPT.format(language=lang_name) + f"\n\nCurrent timestamp: {now}"
     sources_text = _build_sources_text(sources)
-    user_message = f"Claim to verify: {claim}\n\nSources:\n{sources_text}"
+    text_content = f"Claim to verify: {claim}\n\nSources:\n{sources_text}"
+    user_content = _build_user_content(text_content, image_bytes, image_content_type)
 
     response = await client.chat.completions.create(
         model="gpt-4o",
         messages=[
             {"role": "system", "content": system},
-            {"role": "user", "content": user_message},
+            {"role": "user", "content": user_content},
         ],
         max_tokens=2000,
         temperature=0.1,
@@ -138,4 +173,4 @@ async def verify_claim(claim: str, sources: list[dict], language: str = "en") ->
     if not response.choices:
         raise ValueError("OpenAI returned empty choices list")
     import json
-    return json.loads(response.choices[0].message.content)
+    return json.loads(_strip_fenced_json(response.choices[0].message.content))

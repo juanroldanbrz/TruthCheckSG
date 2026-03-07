@@ -70,16 +70,24 @@ async def verify(
     image: UploadFile = File(default=None),
 ):
     claim = text.strip()
+    pipeline_image_bytes: bytes | None = None
+    pipeline_image_content_type: str | None = None
 
     if image and image.filename:
-        image_bytes = await image.read()
         ALLOWED_IMAGE_TYPES = {"image/png", "image/jpeg", "image/webp"}
         if image.content_type not in ALLOWED_IMAGE_TYPES:
             return JSONResponse({"error": "error_no_text"}, status_code=422)
-        extracted = await extract_text_from_image(image_bytes, image.content_type)
-        if not extracted:
-            return JSONResponse({"error": "error_no_text"}, status_code=422)
-        claim = extracted
+        image_bytes = await image.read()
+        if claim:
+            # Text query + image: keep text as claim, pass image as visual context
+            pipeline_image_bytes = image_bytes
+            pipeline_image_content_type = image.content_type
+        else:
+            # Image only: extract text via OCR to form the claim
+            extracted = await extract_text_from_image(image_bytes, image.content_type)
+            if not extracted:
+                return JSONResponse({"error": "error_no_text"}, status_code=422)
+            claim = extracted
 
     if not claim:
         return JSONResponse({"error": "error_empty"}, status_code=422)
@@ -91,7 +99,12 @@ async def verify(
 
     async def background():
         try:
-            async for event in run_pipeline(claim, language):
+            async for event in run_pipeline(
+                claim,
+                language,
+                image_bytes=pipeline_image_bytes,
+                image_content_type=pipeline_image_content_type,
+            ):
                 if event.get("type") == "result":
                     share_id = await save_verification(claim, language, event["data"])
                     event["share_id"] = share_id
