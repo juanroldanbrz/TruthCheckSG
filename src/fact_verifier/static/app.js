@@ -90,12 +90,17 @@ function renderHistorySidebar() {
     const div = document.createElement('div');
     div.className = 'history-entry' + (entry.id === activeHistoryId ? ' active' : '');
     div.dataset.id = entry.id;
+    const hasSingStat = (entry.sources || []).some(source => source.provider === 'singstat');
+    const providerHint = hasSingStat
+      ? '<span class="history-provider-pill">' + escHtml(t('provider_singstat')) + '</span>'
+      : '';
 
     const verdictClass = 'verdict-badge verdict-' + entry.verdict;
     div.innerHTML =
       '<div class="history-entry-claim">' + escHtml(entry.claim) + '</div>' +
       '<div class="history-entry-meta">' +
         '<span class="' + escHtml(verdictClass) + '" style="font-size:10px;padding:1px 4px">' + escHtml(entry.verdict) + '</span>' +
+        providerHint +
         '<span class="history-entry-time">' + relativeTime(entry.timestamp) + '</span>' +
       '</div>';
 
@@ -207,6 +212,11 @@ function safeUrl(url) {
   }
 }
 
+function getProviderLabel(source) {
+  if (!source || !source.provider) return '';
+  return source.provider_label || t('provider_' + source.provider) || source.provider;
+}
+
 function renderResult(data, shareId, claim, imageSrc) {
   document.getElementById('result-claim').textContent = claim || '';
 
@@ -261,9 +271,14 @@ function renderResult(data, shareId, claim, imageSrc) {
     card.className = 'source-card';
     const tierLabel = t('tier_' + source.tier) || source.tier;
     const stanceLabel = t('stance_' + source.stance) || source.stance;
+    const providerLabel = getProviderLabel(source);
+    const providerBadge = providerLabel
+      ? '<span class="provider-badge provider-' + escHtml(source.provider) + '">' + escHtml(providerLabel) + '</span>'
+      : '';
     card.innerHTML =
       '<div class="source-header">' +
         '<span class="tier-badge tier-' + escHtml(source.tier) + '">' + escHtml(tierLabel) + '</span>' +
+        providerBadge +
         '<span class="stance-tag stance-' + escHtml(source.stance) + '">' + escHtml(stanceLabel) + '</span>' +
         '<span class="credibility-label">' + escHtml(source.credibility_label || '') + '</span>' +
       '</div>' +

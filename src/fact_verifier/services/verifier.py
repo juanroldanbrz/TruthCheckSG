@@ -38,6 +38,8 @@ class SourceResult(BaseModel):
     credibility_label: str
     stance: Literal["supports", "contradicts", "neutral"]
     snippet: str
+    provider: str | None = None
+    provider_label: str | None = None
 
 
 class FactCheckResult(BaseModel):
@@ -81,6 +83,7 @@ def _build_sources_text(sources: list[dict]) -> str:
     for i, s in enumerate(sources, 1):
         parts.append(
             f"Source {i}:\nURL: {s['url']}\nTitle: {s['title']}\nTier: {s['tier']}\n"
+            f"Provider: {s.get('provider_label') or s.get('provider', '')}\n"
             f"Snippet: {s.get('snippet', '')}\nContent:\n{s.get('markdown', '')[:2000]}"
         )
     return "\n\n---\n\n".join(parts)
@@ -95,6 +98,28 @@ def _build_user_content(text: str, image_bytes: bytes | None, image_content_type
         {"type": "text", "text": text},
         {"type": "image_url", "image_url": {"url": f"data:{image_content_type};base64,{b64}"}},
     ]
+
+
+def _merge_source_metadata(result_sources: list[dict], original_sources: list[dict]) -> list[dict]:
+    by_url = {source.get("url"): source for source in original_sources if source.get("url")}
+    by_title = {source.get("title"): source for source in original_sources if source.get("title")}
+
+    merged_sources: list[dict] = []
+    for result_source in result_sources:
+        original_source = by_url.get(result_source.get("url")) or by_title.get(result_source.get("title"))
+        if not original_source:
+            merged_sources.append(result_source)
+            continue
+
+        merged_sources.append(
+            {
+                **result_source,
+                "provider": original_source.get("provider"),
+                "provider_label": original_source.get("provider_label"),
+            }
+        )
+
+    return merged_sources
 
 
 @_retry_on_rate_limit
@@ -166,4 +191,6 @@ async def verify_claim(
     )
     if not response.choices:
         raise ValueError("OpenAI returned empty choices list")
-    return response.choices[0].message.parsed.model_dump()
+    result = response.choices[0].message.parsed.model_dump()
+    result["sources"] = _merge_source_metadata(result.get("sources", []), sources)
+    return result

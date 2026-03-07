@@ -13,6 +13,10 @@ def test_iras_is_government():
     assert classify_tier("https://www.iras.gov.sg/taxes") == "government"
 
 
+def test_singstat_is_government():
+    assert classify_tier("https://tablebuilder.singstat.gov.sg/api/table/metadata/M810001") == "government"
+
+
 def test_cna_is_news():
     assert classify_tier("https://www.channelnewsasia.com/singapore") == "news"
 

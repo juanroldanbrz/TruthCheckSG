@@ -1,0 +1,22 @@
+{
+  "Data": {
+    "id": "M850251",
+    "title": "Enrolment In Educational Institutions, Annual",
+    "dataSource": "MINISTRY OF EDUCATION",
+    "row": [
+      {
+        "seriesNo": "1",
+        "rowText": "Total Enrolment In Educational Institutions",
+        "uoM": "Number",
+        "footnote": "",
+        "columns": [
+          { "key": "2025", "value": "NA" },
+          { "key": "2024", "value": "669083" }
+        ]
+      }
+    ]
+  },
+  "DataCount": 1,
+  "StatusCode": 200,
+  "Message": "Success"
+}

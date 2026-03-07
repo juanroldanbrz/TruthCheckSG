@@ -26,6 +26,8 @@ MOCK_SOURCES = [
         "tier": "government",
         "snippet": "No such policy has been announced.",
         "markdown": "The Ministry of Health has not announced any change to CPF withdrawal age.",
+        "provider": "singstat",
+        "provider_label": "SingStat",
     }
 ]
 
@@ -56,6 +58,8 @@ async def test_verify_returns_structured_result():
         assert "explanation" in result
         assert "sources" in result
         assert isinstance(result["sources"], list)
+        assert result["sources"][0]["provider"] == "singstat"
+        assert result["sources"][0]["provider_label"] == "SingStat"
 
 
 @pytest.mark.asyncio

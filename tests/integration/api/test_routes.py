@@ -103,3 +103,55 @@ async def test_verify_image_with_text_passes_image_bytes_to_pipeline():
         call_kwargs = mock_pipeline.call_args.kwargs
         assert call_kwargs.get("image_bytes") == fake_image
         assert call_kwargs.get("image_content_type") == "image/jpeg"
+
+
+@pytest.mark.asyncio
+async def test_verify_link_submission_uses_direct_link_pathway():
+    import asyncio
+    from fact_verifier.main import app
+
+    direct_source = {
+        "url": "https://www.cpf.gov.sg/article",
+        "title": "CPF interest rates remain unchanged",
+        "snippet": "CPF interest rates remain unchanged this quarter.",
+        "markdown": "CPF Board said interest rates remain unchanged this quarter.",
+        "tier": "government",
+    }
+    verify_result = {
+        "verdict": "true",
+        "summary": "The article matches official guidance.",
+        "explanation": "• Point 1\n• Point 2\n• Point 3",
+        "sources": [
+            {
+                "url": direct_source["url"],
+                "title": direct_source["title"],
+                "tier": "government",
+                "credibility_label": "Official source",
+                "stance": "supports",
+                "snippet": "CPF Board said interest rates remain unchanged this quarter.",
+            }
+        ],
+    }
+
+    with (
+        patch("fact_verifier.services.pipeline.fetch_direct_source", AsyncMock(return_value=direct_source)) as mock_direct_fetch,
+        patch("fact_verifier.services.pipeline.parse_claim", AsyncMock(return_value={"is_relevant": True, "search_query": "cpf interest rates singapore"})),
+        patch("fact_verifier.services.pipeline.brave_search", AsyncMock(return_value=[])),
+        patch("fact_verifier.services.pipeline.fetch_all", AsyncMock(return_value=[])),
+        patch("fact_verifier.services.pipeline.get_singstat_sources_for_claim", AsyncMock(return_value=([], {"category": None}))) as mock_singstat,
+        patch("fact_verifier.services.pipeline.verify_claim", AsyncMock(return_value=verify_result)),
+        patch("fact_verifier.main.save_verification", AsyncMock(return_value="share-123")),
+    ):
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.post("/verify", data={"text": "https://www.cpf.gov.sg/article", "language": "en"})
+            assert response.status_code == 200
+            task_id = response.json()["task_id"]
+
+            await asyncio.sleep(0.05)
+            stream_response = await client.get(f"/stream/{task_id}")
+
+    assert stream_response.status_code == 200
+    assert "event: result" in stream_response.text
+    assert '"share_id": "share-123"' in stream_response.text
+    mock_direct_fetch.assert_awaited_once_with("https://www.cpf.gov.sg/article")
+    mock_singstat.assert_not_called()

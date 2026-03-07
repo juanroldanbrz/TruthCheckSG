@@ -13,7 +13,18 @@ async def test_share_page_renders_saved_result(app_client):
             "verdict": "false",
             "summary": "This claim is false.",
             "explanation": "• Point 1\n• Point 2\n• Point 3",
-            "sources": [],
+            "sources": [
+                {
+                    "url": "https://tablebuilder.singstat.gov.sg/api/table/metadata/M810001",
+                    "title": "Indicators On Population, Annual",
+                    "tier": "government",
+                    "credibility_label": "Official Government Source",
+                    "stance": "supports",
+                    "snippet": "SingStat reports Resident Population at 4,180,868 in 2024.",
+                    "provider": "singstat",
+                    "provider_label": "SingStat",
+                }
+            ],
         },
         "image_bytes": None,
     }
@@ -25,6 +36,8 @@ async def test_share_page_renders_saved_result(app_client):
     assert "text/html" in response.headers["content-type"]
     assert "The president of Singapore is Donald Trump" in response.text
     assert "This claim is false." in response.text
+    assert '"provider": "singstat"' in response.text
+    assert '"provider_label": "SingStat"' in response.text
 
 
 @pytest.mark.asyncio

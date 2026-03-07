@@ -1,0 +1,32 @@
+{
+  "Data": {
+    "id": "M400391",
+    "title": "Supply Of Private Residential Properties In The Pipeline By Development Status (End Of Period), Quarterly",
+    "dataSource": "URBAN REDEVELOPMENT AUTHORITY",
+    "row": [
+      {
+        "seriesNo": "1",
+        "rowText": "Total Landed Properties",
+        "uoM": "Number Of Units",
+        "footnote": "",
+        "columns": [
+          { "key": "2025 4Q", "value": "1322" },
+          { "key": "2024 4Q", "value": "1250" }
+        ]
+      },
+      {
+        "seriesNo": "2",
+        "rowText": "Total Non-Landed Properties",
+        "uoM": "Number Of Units",
+        "footnote": "",
+        "columns": [
+          { "key": "2025 4Q", "value": "47358" },
+          { "key": "2024 4Q", "value": "45000" }
+        ]
+      }
+    ]
+  },
+  "DataCount": 1,
+  "StatusCode": 200,
+  "Message": "Success"
+}

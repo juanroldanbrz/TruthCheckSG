@@ -1,0 +1,23 @@
+{
+  "Data": {
+    "id": "M182332",
+    "title": "Unemployment Rate Aged 15 Years And Over, End June, Annual, Seasonally Adjusted",
+    "dataSource": "MINISTRY OF MANPOWER & SINGAPORE DEPARTMENT OF STATISTICS",
+    "row": [
+      {
+        "seriesNo": "5",
+        "rowText": "Resident Unemployment Rate, (SA)",
+        "uoM": "Per Cent",
+        "footnote": "",
+        "columns": [
+          { "key": "2025", "value": "2.8" },
+          { "key": "2024", "value": "2.7" },
+          { "key": "2023", "value": "2.9" }
+        ]
+      }
+    ]
+  },
+  "DataCount": 1,
+  "StatusCode": 200,
+  "Message": "Success"
+}

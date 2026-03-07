@@ -1,0 +1,34 @@
+{
+  "Data": {
+    "generatedBy": "SingStat Table Builder",
+    "dateGenerated": "08/03/2026",
+    "records": {
+      "id": "M810001",
+      "title": "Indicators On Population, Annual",
+      "frequency": "Annual",
+      "dataSource": "SINGAPORE DEPARTMENT OF STATISTICS",
+      "footnote": "",
+      "dataLastUpdated": "30/06/2026",
+      "startPeriod": "1970",
+      "endPeriod": "2025",
+      "total": 2,
+      "row": [
+        {
+          "seriesNo": "1",
+          "rowText": "Total Population",
+          "uoM": "Number",
+          "footnote": ""
+        },
+        {
+          "seriesNo": "2",
+          "rowText": "Resident Population",
+          "uoM": "Number",
+          "footnote": ""
+        }
+      ]
+    }
+  },
+  "DataCount": 1,
+  "StatusCode": 200,
+  "Message": "Success"
+}
