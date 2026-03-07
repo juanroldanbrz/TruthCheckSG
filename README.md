@@ -1,5 +1,7 @@
 # TruthCheckSG
 
+![TruthCheckSG](src/fact_verifier/static/logo.png)
+
 A fact-checking web app for Singapore. Submit a claim in text or as a screenshot — the app searches the web, reads the sources, and returns a verdict with evidence. Results are stored in MongoDB and can be shared via a permanent link.
 
 ## How it works
@@ -20,7 +22,7 @@ A fact-checking web app for Singapore. Submit a claim in text or as a screenshot
 
 ## Stack
 
-- **Backend:** FastAPI + SSE (Python 3.14)
+- **Backend:** FastAPI + SSE (Python 3.13)
 - **AI:** OpenAI GPT-4o with structured output
 - **Search:** Brave Search API
 - **Crawling:** Bright Data unlocker (parallel)
@@ -31,7 +33,7 @@ A fact-checking web app for Singapore. Submit a claim in text or as a screenshot
 
 ### Prerequisites
 
-- Python 3.14+
+- Python 3.13+
 - [uv](https://docs.astral.sh/uv/)
 - Docker (for MongoDB)
 
