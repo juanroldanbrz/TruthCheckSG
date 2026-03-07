@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from openai import AsyncOpenAI
 from fact_verifier.config import settings
 
@@ -88,10 +89,12 @@ def _build_sources_text(sources: list[dict]) -> str:
 
 
 async def parse_claim(claim: str) -> dict:
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    system = f"{PARSE_CLAIM_PROMPT}\n\nCurrent timestamp: {now}"
     response = await client.chat.completions.create(
         model="gpt-4o",
         messages=[
-            {"role": "system", "content": PARSE_CLAIM_PROMPT},
+            {"role": "system", "content": system},
             {"role": "user", "content": claim},
         ],
         max_tokens=200,
@@ -106,7 +109,8 @@ async def parse_claim(claim: str) -> dict:
 
 async def verify_claim(claim: str, sources: list[dict], language: str = "en") -> dict:
     lang_name = LANGUAGE_NAMES.get(language, "English")
-    system = SYSTEM_PROMPT.format(language=lang_name)
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    system = SYSTEM_PROMPT.format(language=lang_name) + f"\n\nCurrent timestamp: {now}"
     sources_text = _build_sources_text(sources)
     user_message = f"Claim to verify: {claim}\n\nSources:\n{sources_text}"
 

@@ -114,7 +114,9 @@ function safeUrl(url) {
   }
 }
 
-function renderResult(data, shareId) {
+function renderResult(data, shareId, claim) {
+  document.getElementById('result-claim').textContent = claim || '';
+
   const badge = document.getElementById('verdict-badge');
   badge.className = 'verdict-badge';
   badge.textContent = t('verdict_' + data.verdict);
@@ -154,6 +156,8 @@ function renderResult(data, shareId) {
 }
 
 // Form submission
+let currentClaim = '';
+
 document.getElementById('verify-form').addEventListener('submit', async e => {
   e.preventDefault();
   const errorEl = document.getElementById('form-error');
@@ -167,6 +171,7 @@ document.getElementById('verify-form').addEventListener('submit', async e => {
     return;
   }
 
+  currentClaim = text;
   const formData = new FormData(e.target);
   showState('loading');
   setStep(1);
@@ -193,7 +198,7 @@ document.getElementById('verify-form').addEventListener('submit', async e => {
   es.addEventListener('result', e => {
     es.close();
     const data = JSON.parse(e.data);
-    renderResult(data.data || data, data.share_id);
+    renderResult(data.data || data, data.share_id, currentClaim);
     showState('result');
   });
 
@@ -226,6 +231,6 @@ setLang('en');
 
 // Auto-display shared result when navigating to /share/<id>
 if (window.__SHARED_RESULT__) {
-  renderResult(window.__SHARED_RESULT__);
+  renderResult(window.__SHARED_RESULT__, null, window.__SHARED_CLAIM__ || '');
   showState('result');
 }
