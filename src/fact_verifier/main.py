@@ -9,7 +9,18 @@ from fastapi import FastAPI, Request, Form, UploadFile, File
 from fastapi.responses import HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from sse_starlette.sse import EventSourceResponse
+try:
+    from sse_starlette.sse import EventSourceResponse
+except Exception:
+    from starlette.responses import StreamingResponse
+
+    class EventSourceResponse(StreamingResponse):
+        def __init__(self, content, **kwargs):
+            async def event_stream():
+                async for event in content:
+                    yield f"event: {event['event']}\ndata: {event['data']}\n\n"
+
+            super().__init__(event_stream(), media_type="text/event-stream", **kwargs)
 
 from fact_verifier.config import settings
 from fact_verifier.services.database import connect, disconnect, save_verification, get_verification, get_verification_image

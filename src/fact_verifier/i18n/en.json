@@ -22,6 +22,7 @@
   "tier_government": "Government",
   "tier_news": "News",
   "tier_other": "Other",
+  "provider_singstat": "SingStat",
   "stance_supports": "Supports",
   "stance_contradicts": "Contradicts",
   "stance_neutral": "Neutral",

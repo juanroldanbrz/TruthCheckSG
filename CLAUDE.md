@@ -4,71 +4,46 @@
 
 **All tests must pass before a PR can be merged.** Run the full test suite (unit + E2E) and confirm everything is green before opening or updating a PR.
 
-## E2E Testing with Playwright
+## E2E Testing Through The Backend
 
-**Every feature MUST have a Playwright E2E test.** No exceptions.
+**E2E tests should exercise the backend flow directly.** Prefer hitting FastAPI endpoints with `httpx.AsyncClient` and `ASGITransport` instead of browser automation.
 
 ### Rules
 
-1. **Always write an E2E test for every feature.** The test must actually interact with the UI — click buttons, fill forms, observe rendered results.
+1. **Write E2E tests around backend flows.** Cover the real request sequence such as `/verify`, `/stream/{task_id}`, `/share/{share_id}`, and `/share/{share_id}/image`.
 
-2. **Always verify success or failure in the UI.** Do not just check HTTP status codes or API responses. Assert on what the user sees in the browser.
+2. **Assert on backend outputs, not browser rendering.** Check JSON payloads, SSE event streams, returned HTML, and binary responses.
 
-3. **Use LLM-as-a-judge when the assertion requires understanding rendered content.** For example: verifying that a verdict summary makes sense, that a result page looks correct, or that an error message is appropriate. Use the OpenAI client with structured output for this.
+3. **Prefer deterministic assertions.** Mock external dependencies when needed and assert on exact backend behavior rather than using an LLM-as-a-judge.
 
-4. **Always use structured output** when calling an LLM in tests. Define a Pydantic model for the response and pass it via `response_format`.
+4. **Only use browser automation for explicitly UI-specific work.** If a feature truly requires DOM behavior, get approval first before introducing Playwright-style coverage.
 
 ### Test Location
 
-Place E2E tests in `tests/e2e/`. Unit tests stay in `tests/`.
+Place E2E tests in `tests/e2e/`. Keep unit tests in `tests/unit/` and app-level integration tests in `tests/integration/`.
 
-### LLM-as-a-Judge Pattern
+### Backend E2E Pattern
 
-Use this pattern when asserting on UI content that requires semantic understanding:
-
-```python
-from pydantic import BaseModel
-from openai import OpenAI
-
-class UIJudgement(BaseModel):
-    passed: bool
-    reason: str
-
-def llm_judge(prompt: str) -> UIJudgement:
-    client = OpenAI()
-    response = client.beta.chat.completions.parse(
-        model="gpt-4o-mini",
-        messages=[{"role": "user", "content": prompt}],
-        response_format=UIJudgement,
-    )
-    return response.choices[0].message.parsed
-```
-
-### E2E Test Example
+Use this pattern for backend flows:
 
 ```python
-from playwright.sync_api import Page
-from tests.e2e.judge import llm_judge
+import pytest
+from httpx import ASGITransport, AsyncClient
 
-def test_verify_claim_shows_verdict(page: Page):
-    page.goto("http://localhost:8000")
-    page.fill("#claim-input", "CPF withdrawal age raised to 70")
-    page.click("#submit-btn")
-    page.wait_for_selector(".verdict-badge", timeout=60000)
 
-    verdict_text = page.inner_text(".verdict-badge")
-    summary_text = page.inner_text(".result-summary")
+@pytest.mark.asyncio
+async def test_verify_claim_streams_result():
+    from fact_verifier.main import app
 
-    judgement = llm_judge(
-        f"A fact-checking UI returned verdict '{verdict_text}' and summary: '{summary_text}'. "
-        "Does this look like a valid, coherent fact-check result for the claim 'CPF withdrawal age raised to 70'?"
-    )
-    assert judgement.passed, judgement.reason
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        verify_response = await client.post("/verify", data={"text": "CPF withdrawal age raised to 70", "language": "en"})
+        assert verify_response.status_code == 200
+        task_id = verify_response.json()["task_id"]
+
+        stream_response = await client.get(f"/stream/{task_id}")
+        assert stream_response.status_code == 200
+        assert "event: result" in stream_response.text
 ```
-
-### Structured Output Everywhere
-
-Use structured output (Pydantic + `response_format`) for **all** LLM calls in both application code and tests. Never parse raw JSON strings manually when a structured model can be used instead.
 
 ## Cleanup
 

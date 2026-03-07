@@ -1,0 +1,23 @@
+{
+  "Data": {
+    "id": "M213811",
+    "title": "Percent Change In Consumer Price Index (CPI) Over Corresponding Period Of Previous Year, 2024 As Base Year, Annual",
+    "dataSource": "SINGAPORE DEPARTMENT OF STATISTICS",
+    "row": [
+      {
+        "seriesNo": "1",
+        "rowText": "All Items",
+        "uoM": "Per Cent",
+        "footnote": "",
+        "columns": [
+          { "key": "2025", "value": "0.9" },
+          { "key": "2024", "value": "2.4" },
+          { "key": "2023", "value": "4.8" }
+        ]
+      }
+    ]
+  },
+  "DataCount": 1,
+  "StatusCode": 200,
+  "Message": "Success"
+}

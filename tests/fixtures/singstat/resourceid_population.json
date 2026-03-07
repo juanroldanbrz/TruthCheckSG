@@ -1,0 +1,20 @@
+{
+  "Data": {
+    "generatedBy": "SingStat Table Builder",
+    "dateGenerated": "08/03/2026",
+    "total": 1,
+    "records": [
+      {
+        "theme": "Population",
+        "subject": "Population and Population Structure",
+        "topic": "Key Annual Indicators on Population",
+        "id": "M810001",
+        "title": "Indicators On Population, Annual",
+        "tableType": "time series"
+      }
+    ]
+  },
+  "DataCount": 1,
+  "StatusCode": 200,
+  "Message": "Success"
+}

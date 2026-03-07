@@ -2,7 +2,7 @@
 name = "fact-verifier"
 version = "0.1.0"
 description = "Add your description here"
-requires-python = ">=3.13"
+requires-python = ">=3.13,<3.14"
 dependencies = [
     "fastapi>=0.135.1",
     "httpx>=0.28.1",
@@ -20,15 +20,19 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "playwright>=1.49.0",
     "pytest>=9.0.2",
     "pytest-asyncio>=1.3.0",
-    "pytest-playwright>=0.6.0",
 ]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 pythonpath = ["src"]
+testpaths = ["tests"]
+markers = [
+    "unit: fast isolated service tests",
+    "integration: app-level tests that exercise FastAPI routes and flows",
+    "e2e: backend end-to-end flow tests",
+]
 
 [build-system]
 requires = ["setuptools>=61"]

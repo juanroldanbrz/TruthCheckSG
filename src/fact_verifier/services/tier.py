@@ -1,6 +1,6 @@
 from urllib.parse import urlparse
 
-GOV_DOMAINS = {".gov.sg"}
+GOV_DOMAINS = {".gov.sg", ".singstat.gov.sg"}
 NEWS_DOMAINS = {
     "channelnewsasia.com",
     "cna.asia",

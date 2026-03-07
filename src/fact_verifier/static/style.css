@@ -357,6 +357,20 @@ h2 {
 .tier-government { background: var(--gov-color); }
 .tier-news       { background: var(--news-color); }
 .tier-other      { background: var(--other-color); }
+.provider-badge {
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  background: #e0f2fe;
+  color: #075985;
+  border: 1px solid #7dd3fc;
+}
+.provider-singstat {
+  background: #e0f2fe;
+  color: #075985;
+  border-color: #7dd3fc;
+}
 .stance-tag {
   padding: 3px 10px;
   border-radius: 12px;
@@ -485,6 +499,16 @@ h2 {
 .history-entry-time {
   font-size: 11px;
   color: var(--muted);
+}
+
+.history-provider-pill {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: #e0f2fe;
+  color: #075985;
+  border: 1px solid #7dd3fc;
 }
 
 .sidebar-balancer {

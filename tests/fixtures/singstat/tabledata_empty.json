@@ -1,0 +1,11 @@
+{
+  "Data": {
+    "id": "M999999",
+    "title": "Empty Table",
+    "dataSource": "SINGSTAT",
+    "row": []
+  },
+  "DataCount": 1,
+  "StatusCode": 200,
+  "Message": "Success"
+}
