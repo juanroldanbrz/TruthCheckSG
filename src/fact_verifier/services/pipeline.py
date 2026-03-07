@@ -7,11 +7,14 @@ from fact_verifier.services.tier import classify_tier
 
 
 async def run_pipeline(
-    claim: str, language: str = "en"
+    claim: str,
+    language: str = "en",
+    image_bytes: bytes | None = None,
+    image_content_type: str | None = None,
 ) -> AsyncGenerator[dict, None]:
 
     try:
-        parsed = await parse_claim(claim)
+        parsed = await parse_claim(claim, language, image_bytes=image_bytes, image_content_type=image_content_type)
     except Exception:
         yield {"type": "error", "message": "error_generic"}
         return
@@ -48,7 +51,7 @@ async def run_pipeline(
     yield {"type": "progress", "step": 3, "message": "step_3"}
 
     try:
-        result = await verify_claim(claim, sources_with_content, language)
+        result = await verify_claim(claim, sources_with_content, language, image_bytes=image_bytes, image_content_type=image_content_type)
         yield {"type": "result", "data": result}
     except Exception:
         yield {"type": "error", "message": "error_generic"}

@@ -6,9 +6,11 @@ from unittest.mock import AsyncMock, patch
 async def test_pipeline_emits_progress_and_result_events():
     events = []
 
-    with patch("fact_verifier.services.pipeline.brave_search", new_callable=AsyncMock) as mock_search, \
+    with patch("fact_verifier.services.pipeline.parse_claim", new_callable=AsyncMock) as mock_parse, \
+         patch("fact_verifier.services.pipeline.brave_search", new_callable=AsyncMock) as mock_search, \
          patch("fact_verifier.services.pipeline.fetch_all", new_callable=AsyncMock) as mock_fetch, \
          patch("fact_verifier.services.pipeline.verify_claim", new_callable=AsyncMock) as mock_verify:
+        mock_parse.return_value = {"is_relevant": True, "search_query": "CPF withdrawal age"}
 
         mock_search.return_value = [
             {"url": "https://www.moh.gov.sg/a", "title": "MOH", "snippet": "info"}
@@ -37,9 +39,11 @@ async def test_pipeline_emits_progress_and_result_events():
 async def test_pipeline_emits_three_progress_steps():
     events = []
 
-    with patch("fact_verifier.services.pipeline.brave_search", new_callable=AsyncMock) as mock_search, \
+    with patch("fact_verifier.services.pipeline.parse_claim", new_callable=AsyncMock) as mock_parse, \
+         patch("fact_verifier.services.pipeline.brave_search", new_callable=AsyncMock) as mock_search, \
          patch("fact_verifier.services.pipeline.fetch_all", new_callable=AsyncMock) as mock_fetch, \
          patch("fact_verifier.services.pipeline.verify_claim", new_callable=AsyncMock) as mock_verify:
+        mock_parse.return_value = {"is_relevant": True, "search_query": "CPF withdrawal age"}
 
         mock_search.return_value = [
             {"url": "https://www.moh.gov.sg/a", "title": "MOH", "snippet": "info"}
@@ -69,9 +73,11 @@ async def test_pipeline_emits_three_progress_steps():
 async def test_pipeline_emits_error_on_no_search_results():
     events = []
 
-    with patch("fact_verifier.services.pipeline.brave_search", new_callable=AsyncMock) as mock_search, \
+    with patch("fact_verifier.services.pipeline.parse_claim", new_callable=AsyncMock) as mock_parse, \
+         patch("fact_verifier.services.pipeline.brave_search", new_callable=AsyncMock) as mock_search, \
          patch("fact_verifier.services.pipeline.fetch_all", new_callable=AsyncMock) as mock_fetch:
 
+        mock_parse.return_value = {"is_relevant": True, "search_query": "obscure claim"}
         mock_search.return_value = []
         mock_fetch.return_value = []
 
@@ -84,13 +90,57 @@ async def test_pipeline_emits_error_on_no_search_results():
 
 
 @pytest.mark.asyncio
-async def test_pipeline_emits_error_on_verify_exception():
-    events = []
-
-    with patch("fact_verifier.services.pipeline.brave_search", new_callable=AsyncMock) as mock_search, \
+async def test_pipeline_passes_image_to_parse_claim():
+    """run_pipeline must pass image_bytes and image_content_type to parse_claim."""
+    with patch("fact_verifier.services.pipeline.parse_claim", new_callable=AsyncMock) as mock_parse, \
+         patch("fact_verifier.services.pipeline.brave_search", new_callable=AsyncMock) as mock_search, \
          patch("fact_verifier.services.pipeline.fetch_all", new_callable=AsyncMock) as mock_fetch, \
          patch("fact_verifier.services.pipeline.verify_claim", new_callable=AsyncMock) as mock_verify:
 
+        mock_parse.return_value = {"is_relevant": True, "search_query": "investment scam"}
+        mock_search.return_value = [{"url": "https://www.police.gov.sg/a", "title": "SPF", "snippet": "scam alert"}]
+        mock_fetch.return_value = [{"url": "https://www.police.gov.sg/a", "markdown": "Investment scam alert."}]
+        mock_verify.return_value = {"verdict": "false", "summary": "Scam.", "explanation": "Details.", "sources": []}
+
+        from fact_verifier.services.pipeline import run_pipeline
+        async for _ in run_pipeline("is this an investment scam?", "en", image_bytes=b"fakeimg", image_content_type="image/jpeg"):
+            pass
+
+        mock_parse.assert_called_once_with("is this an investment scam?", "en", image_bytes=b"fakeimg", image_content_type="image/jpeg")
+
+
+@pytest.mark.asyncio
+async def test_pipeline_passes_image_to_verify_claim():
+    """run_pipeline must pass image_bytes and image_content_type to verify_claim."""
+    with patch("fact_verifier.services.pipeline.parse_claim", new_callable=AsyncMock) as mock_parse, \
+         patch("fact_verifier.services.pipeline.brave_search", new_callable=AsyncMock) as mock_search, \
+         patch("fact_verifier.services.pipeline.fetch_all", new_callable=AsyncMock) as mock_fetch, \
+         patch("fact_verifier.services.pipeline.verify_claim", new_callable=AsyncMock) as mock_verify:
+
+        mock_parse.return_value = {"is_relevant": True, "search_query": "investment scam"}
+        mock_search.return_value = [{"url": "https://www.police.gov.sg/a", "title": "SPF", "snippet": "scam alert"}]
+        mock_fetch.return_value = [{"url": "https://www.police.gov.sg/a", "markdown": "Investment scam alert."}]
+        mock_verify.return_value = {"verdict": "false", "summary": "Scam.", "explanation": "Details.", "sources": []}
+
+        from fact_verifier.services.pipeline import run_pipeline
+        async for _ in run_pipeline("is this an investment scam?", "en", image_bytes=b"fakeimg", image_content_type="image/jpeg"):
+            pass
+
+        call_kwargs = mock_verify.call_args.kwargs
+        assert call_kwargs.get("image_bytes") == b"fakeimg"
+        assert call_kwargs.get("image_content_type") == "image/jpeg"
+
+
+@pytest.mark.asyncio
+async def test_pipeline_emits_error_on_verify_exception():
+    events = []
+
+    with patch("fact_verifier.services.pipeline.parse_claim", new_callable=AsyncMock) as mock_parse, \
+         patch("fact_verifier.services.pipeline.brave_search", new_callable=AsyncMock) as mock_search, \
+         patch("fact_verifier.services.pipeline.fetch_all", new_callable=AsyncMock) as mock_fetch, \
+         patch("fact_verifier.services.pipeline.verify_claim", new_callable=AsyncMock) as mock_verify:
+
+        mock_parse.return_value = {"is_relevant": True, "search_query": "some claim"}
         mock_search.return_value = [
             {"url": "https://www.moh.gov.sg/a", "title": "MOH", "snippet": "info"}
         ]

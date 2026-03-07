@@ -8,32 +8,24 @@ async def test_fetch_and_convert_returns_markdown():
     mock_response.text = "<html><body><p>CPF is a retirement scheme.</p></body></html>"
     mock_response.raise_for_status = MagicMock()
 
-    with patch("fact_verifier.services.scraper.httpx.AsyncClient") as mock_client_class:
-        mock_client = AsyncMock()
-        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-        mock_client.__aexit__ = AsyncMock(return_value=None)
-        mock_client.get = AsyncMock(return_value=mock_response)
-        mock_client_class.return_value = mock_client
+    mock_client = AsyncMock()
+    mock_client.get = AsyncMock(return_value=mock_response)
 
-        with patch("fact_verifier.services.scraper.trafilatura.extract", return_value="CPF is a retirement scheme."):
-            from fact_verifier.services.scraper import fetch_as_markdown
-            result = await fetch_as_markdown("https://www.cpf.gov.sg/article")
-            assert result is not None
-            assert "CPF" in result
+    with patch("fact_verifier.services.scraper.trafilatura.extract", return_value="CPF is a retirement scheme."):
+        from fact_verifier.services.scraper import fetch_as_markdown
+        result = await fetch_as_markdown("https://www.cpf.gov.sg/article", mock_client)
+        assert result is not None
+        assert "CPF" in result
 
 
 @pytest.mark.asyncio
 async def test_fetch_returns_none_on_failure():
-    with patch("fact_verifier.services.scraper.httpx.AsyncClient") as mock_client_class:
-        mock_client = AsyncMock()
-        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-        mock_client.__aexit__ = AsyncMock(return_value=None)
-        mock_client.get = AsyncMock(side_effect=Exception("timeout"))
-        mock_client_class.return_value = mock_client
+    mock_client = AsyncMock()
+    mock_client.get = AsyncMock(side_effect=Exception("timeout"))
 
-        from fact_verifier.services.scraper import fetch_as_markdown
-        result = await fetch_as_markdown("https://bad-url.example.com")
-        assert result is None
+    from fact_verifier.services.scraper import fetch_as_markdown
+    result = await fetch_as_markdown("https://bad-url.example.com", mock_client)
+    assert result is None
 
 
 @pytest.mark.asyncio
@@ -42,22 +34,18 @@ async def test_fetch_returns_none_when_trafilatura_extracts_nothing():
     mock_response.text = "<html><body></body></html>"
     mock_response.raise_for_status = MagicMock()
 
-    with patch("fact_verifier.services.scraper.httpx.AsyncClient") as mock_client_class:
-        mock_client = AsyncMock()
-        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-        mock_client.__aexit__ = AsyncMock(return_value=None)
-        mock_client.get = AsyncMock(return_value=mock_response)
-        mock_client_class.return_value = mock_client
+    mock_client = AsyncMock()
+    mock_client.get = AsyncMock(return_value=mock_response)
 
-        with patch("fact_verifier.services.scraper.trafilatura.extract", return_value=None):
-            from fact_verifier.services.scraper import fetch_as_markdown
-            result = await fetch_as_markdown("https://www.example.com/empty")
-            assert result is None
+    with patch("fact_verifier.services.scraper.trafilatura.extract", return_value=None):
+        from fact_verifier.services.scraper import fetch_as_markdown
+        result = await fetch_as_markdown("https://www.example.com/empty", mock_client)
+        assert result is None
 
 
 @pytest.mark.asyncio
 async def test_fetch_all_returns_only_successful_results():
-    async def mock_fetch(url):
+    async def mock_fetch(url, client):
         if "good" in url:
             return "Good content"
         return None
