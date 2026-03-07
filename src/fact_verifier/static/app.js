@@ -141,6 +141,10 @@ imageInput.addEventListener('change', () => {
 });
 
 function handleImageFile(file) {
+  const dt = new DataTransfer();
+  dt.items.add(file);
+  imageInput.files = dt.files;
+
   const reader = new FileReader();
   reader.onload = e => {
     imagePreview.src = e.target.result;

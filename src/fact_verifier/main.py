@@ -13,7 +13,7 @@ from sse_starlette.sse import EventSourceResponse
 
 from fact_verifier.config import settings
 from fact_verifier.services.database import connect, disconnect, save_verification, get_verification, get_verification_image
-from fact_verifier.services.ocr import extract_text_from_image
+from fact_verifier.services.ocr import analyze_image
 from fact_verifier.services.pipeline import run_pipeline
 from fact_verifier.services.verifier import describe_image
 
@@ -83,16 +83,19 @@ async def verify(
         image_bytes = await image.read()
         raw_image_bytes = image_bytes
         raw_image_content_type = image.content_type
+        pipeline_image_bytes = image_bytes
+        pipeline_image_content_type = image.content_type
+
+        analysis = await analyze_image(image_bytes, image.content_type)
+        if not analysis:
+            return JSONResponse({"error": "error_no_text"}, status_code=422)
+
+        image_context = f"Image text: {analysis.ocr_text}\nImage intent: {analysis.intent}"
+
         if claim:
-            # Text query + image: keep text as claim, pass image as visual context
-            pipeline_image_bytes = image_bytes
-            pipeline_image_content_type = image.content_type
+            claim = f"{claim}\n\n{image_context}"
         else:
-            # Image only: extract text via OCR to form the claim
-            extracted = await extract_text_from_image(image_bytes, image.content_type)
-            if not extracted:
-                return JSONResponse({"error": "error_no_text"}, status_code=422)
-            claim = extracted
+            claim = image_context
 
     if not claim:
         return JSONResponse({"error": "error_empty"}, status_code=422)

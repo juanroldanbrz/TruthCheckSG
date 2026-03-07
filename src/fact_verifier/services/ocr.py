@@ -1,14 +1,20 @@
 import base64
+from pydantic import BaseModel
 from openai import AsyncOpenAI
 from fact_verifier.config import settings
 
 client = AsyncOpenAI(api_key=settings.openai_api_key)
 
 
-async def extract_text_from_image(image_bytes: bytes, content_type: str) -> str | None:
+class ImageAnalysis(BaseModel):
+    ocr_text: str
+    intent: str
+
+
+async def analyze_image(image_bytes: bytes, content_type: str) -> ImageAnalysis | None:
     b64 = base64.b64encode(image_bytes).decode("utf-8")
     try:
-        response = await client.chat.completions.create(
+        response = await client.beta.chat.completions.parse(
             model="gpt-4o",
             messages=[
                 {
@@ -17,9 +23,13 @@ async def extract_text_from_image(image_bytes: bytes, content_type: str) -> str 
                         {
                             "type": "text",
                             "text": (
-                                "Extract all visible text from this image exactly as written. "
-                                "Return only the extracted text, no commentary. "
-                                "If there is no readable text, return an empty string."
+                                "Analyze this image and return two things:\n"
+                                "1. ocr_text: All visible text in the image, exactly as written. "
+                                "Return an empty string if there is no readable text.\n"
+                                "2. intent: The actual purpose or goal of this image — what it is "
+                                "trying to make the viewer believe, do, or buy. "
+                                "Be specific about any promotional, misleading, or persuasive intent. "
+                                "If the image is neutral (e.g. a news screenshot), state that plainly."
                             ),
                         },
                         {
@@ -29,11 +39,11 @@ async def extract_text_from_image(image_bytes: bytes, content_type: str) -> str 
                     ],
                 }
             ],
-            max_tokens=1000,
+            response_format=ImageAnalysis,
+            max_tokens=500,
         )
         if not response.choices:
             return None
-        text = response.choices[0].message.content.strip()
-        return text if text else None
+        return response.choices[0].message.parsed
     except Exception:
         return None
