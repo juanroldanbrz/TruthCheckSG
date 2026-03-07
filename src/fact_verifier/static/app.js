@@ -270,6 +270,7 @@ function renderResult(data, shareId, claim, imageSrc) {
 
 // Form submission
 let currentClaim = '';
+let submitTime = null;
 
 document.getElementById('verify-form').addEventListener('submit', async e => {
   e.preventDefault();
@@ -284,6 +285,14 @@ document.getElementById('verify-form').addEventListener('submit', async e => {
     return;
   }
 
+  submitTime = Date.now();
+
+  posthog.capture('claim_submitted', {
+    input_type: hasImage && text ? 'text_and_image' : hasImage ? 'image_only' : 'text_only',
+    claim_text: text,
+    language: currentLang,
+  });
+
   currentClaim = text;
   const formData = new FormData(e.target);
   showState('loading');
@@ -296,6 +305,12 @@ document.getElementById('verify-form').addEventListener('submit', async e => {
     if (json.error) throw new Error(json.error);
     taskId = json.task_id;
   } catch (err) {
+    posthog.capture('verification_failed', {
+      error_code: err.message || 'fetch_error',
+      phase: 'fetch',
+      duration_ms: submitTime !== null ? Date.now() - submitTime : null,
+      language: currentLang,
+    });
     showState('error');
     document.getElementById('error-message').textContent = t('error_generic');
     return;
@@ -330,14 +345,32 @@ document.getElementById('verify-form').addEventListener('submit', async e => {
     activeHistoryId = historyEntry.id;
     renderHistorySidebar();
     showState('result');
+
+    posthog.capture('verification_completed', {
+      verdict: resultData.verdict,
+      duration_ms: submitTime !== null ? Date.now() - submitTime : null,
+      language: currentLang,
+    });
   });
 
   es.addEventListener('error', e => {
     es.close();
     let msg = t('error_generic');
-    try { msg = t(JSON.parse(e.data).message) || msg; } catch (_) {}
+    let rawMessage = 'error_generic';
+    try {
+      const parsed = JSON.parse(e.data);
+      rawMessage = parsed.message || rawMessage;
+      msg = t(rawMessage) || msg;
+    } catch (_) {}
     document.getElementById('error-message').textContent = msg;
     showState('error');
+
+    posthog.capture('verification_failed', {
+      error_code: rawMessage,
+      phase: 'stream',
+      duration_ms: submitTime !== null ? Date.now() - submitTime : null,
+      language: currentLang,
+    });
   });
 });
 
