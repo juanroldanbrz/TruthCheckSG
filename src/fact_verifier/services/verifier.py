@@ -41,7 +41,8 @@ Use the following five-tier verdict scale:
 
 Writing rules — strictly follow these:
 - summary: 1 short sentence. Simple words. No jargon. Max 20 words.
-- explanation: exactly 3 bullet points. Each starts with "• ". Each is 1 short sentence. Simple words. No jargon. Separate bullets with a newline."""
+- explanation: exactly 3 bullet points. Each starts with "• ". Each is 1 short sentence. Simple words. No jargon. Separate bullets with a newline.
+- snippet: 1-2 plain text sentences only. No HTML tags. No markdown. Summarise what the source says about the claim."""
 
 class SourceResult(BaseModel):
     url: str
