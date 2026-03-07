@@ -3,6 +3,7 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     brave_api_key: str
     openai_api_key: str
+    openai_keys: str = ""  # comma-separated list; overrides openai_api_key when set
     brightdata_api_key: str = ""
     max_sources: int = 10
     request_timeout: int = 90

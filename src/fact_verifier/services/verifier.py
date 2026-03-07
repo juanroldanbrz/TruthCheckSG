@@ -1,23 +1,10 @@
-import os
 from datetime import datetime, timezone
 from typing import Literal
 from pydantic import BaseModel
 from openai import RateLimitError
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 from fact_verifier.config import settings
-
-if settings.langfuse_secret_key and settings.langfuse_public_key:
-    os.environ.setdefault("LANGFUSE_SECRET_KEY", settings.langfuse_secret_key)
-    os.environ.setdefault("LANGFUSE_PUBLIC_KEY", settings.langfuse_public_key)
-    os.environ.setdefault("LANGFUSE_HOST", settings.langfuse_host)
-    try:
-        from langfuse.openai import AsyncOpenAI
-    except Exception:
-        from openai import AsyncOpenAI
-else:
-    from openai import AsyncOpenAI
-
-client = AsyncOpenAI(api_key=settings.openai_api_key)
+from fact_verifier.openai_client import get_client
 
 _retry_on_rate_limit = retry(
     retry=retry_if_exception_type(RateLimitError),
@@ -114,7 +101,7 @@ def _build_user_content(text: str, image_bytes: bytes | None, image_content_type
 async def describe_image(image_bytes: bytes, image_content_type: str) -> str:
     import base64
     b64 = base64.b64encode(image_bytes).decode("utf-8")
-    response = await client.beta.chat.completions.parse(
+    response = await get_client().beta.chat.completions.parse(
         model=settings.openai_model,
         messages=[{"role": "user", "content": [
             {"type": "text", "text": "Describe what this image is about in one concise sentence."},
@@ -139,7 +126,7 @@ async def parse_claim(
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     system = PARSE_CLAIM_PROMPT.format(language=lang_name) + f"\n\nCurrent timestamp: {now}"
     user_content = _build_user_content(claim, image_bytes, image_content_type)
-    response = await client.beta.chat.completions.parse(
+    response = await get_client().beta.chat.completions.parse(
         model=settings.openai_model,
         messages=[
             {"role": "system", "content": system},
@@ -168,7 +155,7 @@ async def verify_claim(
     text_content = f"Claim to verify: {claim}\n\nSources:\n{sources_text}"
     user_content = _build_user_content(text_content, image_bytes, image_content_type)
 
-    response = await client.beta.chat.completions.parse(
+    response = await get_client().beta.chat.completions.parse(
         model=settings.openai_model,
         messages=[
             {"role": "system", "content": system},

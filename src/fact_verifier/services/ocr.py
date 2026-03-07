@@ -1,10 +1,9 @@
 import base64
 from pydantic import BaseModel
-from openai import AsyncOpenAI, RateLimitError
+from openai import RateLimitError
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 from fact_verifier.config import settings
-
-client = AsyncOpenAI(api_key=settings.openai_api_key)
+from fact_verifier.openai_client import get_client
 
 
 class ImageAnalysis(BaseModel):
@@ -21,7 +20,7 @@ class ImageAnalysis(BaseModel):
 async def analyze_image(image_bytes: bytes, content_type: str) -> ImageAnalysis | None:
     b64 = base64.b64encode(image_bytes).decode("utf-8")
     try:
-        response = await client.beta.chat.completions.parse(
+        response = await get_client().beta.chat.completions.parse(
             model="gpt-5-mini-2025-08-07",
             messages=[
                 {
