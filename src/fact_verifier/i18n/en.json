@@ -31,6 +31,7 @@
   "error_no_text": "Could not extract text from image. Please try again.",
   "error_not_relevant": "This doesn't appear to be a verifiable factual claim. Please enter a statement you'd like fact-checked.",
   "limited_sources": "Limited sources found.",
+  "no_text_provided": "No text provided",
   "share_button": "Copy share link",
   "share_copied": "Copied!"
 }

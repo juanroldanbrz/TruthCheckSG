@@ -31,6 +31,7 @@
   "error_no_text": "Tidak dapat mengekstrak teks dari gambar. Sila cuba lagi.",
   "error_not_relevant": "Ini nampaknya bukan dakwaan fakta yang boleh disahkan. Sila masukkan pernyataan yang ingin anda semak.",
   "limited_sources": "Sumber yang ditemui adalah terhad.",
+  "no_text_provided": "Tiada teks disediakan",
   "share_button": "Salin pautan kongsi",
   "share_copied": "Disalin!"
 }
