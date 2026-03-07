@@ -1,5 +1,7 @@
 import os
 from datetime import datetime, timezone
+from openai import RateLimitError
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 from fact_verifier.config import settings
 
 if settings.langfuse_secret_key and settings.langfuse_public_key:
@@ -15,6 +17,13 @@ else:
 
 client = AsyncOpenAI(api_key=settings.openai_api_key)
 
+_retry_on_rate_limit = retry(
+    retry=retry_if_exception_type(RateLimitError),
+    wait=wait_exponential(multiplier=1, min=2, max=60),
+    stop=stop_after_attempt(5),
+    reraise=True,
+)
+
 SYSTEM_PROMPT = """You are a fact-checking assistant for Singapore.
 You will receive a claim and a list of sources with their content.
 Respond ONLY in {language}.
@@ -26,7 +35,11 @@ Use the following five-tier verdict scale:
 - likely_true: Mostly correct but small details may be unclear. Most evidence supports this claim.
 - unverified: Not enough information to confirm or deny. Cannot determine if true or false yet.
 - likely_false: Evidence suggests it is probably wrong. Most reliable sources say this is not correct.
-- false: The claim is incorrect. Reliable sources show this claim is not true."""
+- false: The claim is incorrect. Reliable sources show this claim is not true.
+
+Writing rules — strictly follow these:
+- summary: 1 short sentence. Simple words. No jargon. Max 20 words.
+- explanation: exactly 3 bullet points. Each starts with "• ". Each is 1 short sentence. Simple words. No jargon. Separate bullets with a newline."""
 
 VERIFY_SCHEMA = {
     "type": "json_schema",
@@ -130,11 +143,12 @@ def _build_user_content(text: str, image_bytes: bytes | None, image_content_type
     ]
 
 
+@_retry_on_rate_limit
 async def describe_image(image_bytes: bytes, image_content_type: str) -> str:
     import base64
     b64 = base64.b64encode(image_bytes).decode("utf-8")
     response = await client.chat.completions.create(
-        model="gpt-4o-mini",
+        model="gpt-5-mini-2025-08-07",
         messages=[{"role": "user", "content": [
             {"type": "text", "text": "Describe what this image is about in one concise sentence."},
             {"type": "image_url", "image_url": {"url": f"data:{image_content_type};base64,{b64}"}},
@@ -147,6 +161,7 @@ async def describe_image(image_bytes: bytes, image_content_type: str) -> str:
     return response.choices[0].message.content.strip()
 
 
+@_retry_on_rate_limit
 async def parse_claim(
     claim: str,
     language: str = "en",
@@ -158,7 +173,7 @@ async def parse_claim(
     system = PARSE_CLAIM_PROMPT.format(language=lang_name) + f"\n\nCurrent timestamp: {now}"
     user_content = _build_user_content(claim, image_bytes, image_content_type)
     response = await client.chat.completions.create(
-        model="gpt-4o",
+        model="gpt-5-mini-2025-08-07",
         messages=[
             {"role": "system", "content": system},
             {"role": "user", "content": user_content},
@@ -173,6 +188,7 @@ async def parse_claim(
     return json.loads(_strip_fenced_json(response.choices[0].message.content))
 
 
+@_retry_on_rate_limit
 async def verify_claim(
     claim: str,
     sources: list[dict],
@@ -188,7 +204,7 @@ async def verify_claim(
     user_content = _build_user_content(text_content, image_bytes, image_content_type)
 
     response = await client.chat.completions.create(
-        model="gpt-4o",
+        model="gpt-5-mini-2025-08-07",
         messages=[
             {"role": "system", "content": system},
             {"role": "user", "content": user_content},

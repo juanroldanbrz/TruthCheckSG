@@ -10,7 +10,7 @@ class UIJudgement(BaseModel):
 def llm_judge(prompt: str) -> UIJudgement:
     client = OpenAI()
     response = client.beta.chat.completions.parse(
-        model="gpt-4o-mini",
+        model="gpt-5-mini-2025-08-07",
         messages=[{"role": "user", "content": prompt}],
         response_format=UIJudgement,
     )

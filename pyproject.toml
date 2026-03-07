@@ -13,6 +13,7 @@ dependencies = [
     "pydantic-settings>=2.13.1",
     "python-multipart>=0.0.22",
     "sse-starlette>=3.3.2",
+    "tenacity>=8.0.0",
     "trafilatura>=2.0.0",
     "uvicorn[standard]>=0.41.0",
 ]

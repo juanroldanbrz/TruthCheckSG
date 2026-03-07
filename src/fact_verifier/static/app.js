@@ -222,7 +222,21 @@ function renderResult(data, shareId, claim, imageSrc) {
   document.getElementById('verdict-explanation').textContent = t('verdict_' + data.verdict + '_explanation');
 
   document.getElementById('result-summary').textContent = data.summary || '';
-  document.getElementById('result-explanation').textContent = data.explanation || '';
+
+  const explanationEl = document.getElementById('result-explanation');
+  const bullets = (data.explanation || '').split('\n').map(s => s.trim()).filter(s => s);
+  if (bullets.length > 1) {
+    const ul = document.createElement('ul');
+    bullets.forEach(b => {
+      const li = document.createElement('li');
+      li.textContent = b.replace(/^•\s*/, '');
+      ul.appendChild(li);
+    });
+    explanationEl.innerHTML = '';
+    explanationEl.appendChild(ul);
+  } else {
+    explanationEl.textContent = data.explanation || '';
+  }
   document.getElementById('sources-title').textContent = t('sources_title');
 
   const shareContainer = document.getElementById('share-container');
