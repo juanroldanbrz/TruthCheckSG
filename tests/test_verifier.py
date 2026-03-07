@@ -69,3 +69,17 @@ async def test_verify_raises_on_invalid_json():
         from services.verifier import verify_claim
         with pytest.raises(Exception):
             await verify_claim("some claim", MOCK_SOURCES, "en")
+
+
+@pytest.mark.asyncio
+async def test_verify_handles_markdown_fenced_json():
+    fenced_response = f"```json\n{MOCK_GPT_RESPONSE}\n```"
+    mock_response = MagicMock()
+    mock_response.choices[0].message.content = fenced_response
+
+    with patch("services.verifier.client.chat.completions.create", new_callable=AsyncMock) as mock_create:
+        mock_create.return_value = mock_response
+        from services.verifier import verify_claim
+        result = await verify_claim("CPF age raised to 70", MOCK_SOURCES, "en")
+        assert result["verdict"] == "false"
+        assert "summary" in result

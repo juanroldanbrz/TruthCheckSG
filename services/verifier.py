@@ -60,4 +60,10 @@ async def verify_claim(claim: str, sources: list[dict], language: str = "en") ->
         temperature=0.1,
     )
     content = response.choices[0].message.content.strip()
+    # Strip markdown code fences if GPT wraps the JSON despite being told not to
+    if content.startswith("```"):
+        content = content.split("```", 2)[1]
+        if content.startswith("json"):
+            content = content[4:]
+        content = content.strip()
     return json.loads(content)
