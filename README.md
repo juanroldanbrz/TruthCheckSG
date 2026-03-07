@@ -31,16 +31,23 @@ A fact-checking web app for Singapore. Submit a claim in text or as a screenshot
 - Python 3.14+
 - [uv](https://docs.astral.sh/uv/)
 
-### Install
+### 1. Create the virtual environment and install dependencies
 
 ```bash
 uv sync --dev
+```
+
+This creates a `.venv` folder and installs all dependencies (including dev tools).
+
+### 2. Install Playwright browsers (for e2e tests)
+
+```bash
 uv run playwright install chromium
 ```
 
-### Environment
+### 3. Configure environment variables
 
-Create a `.env` file:
+Create a `.env` file in the project root:
 
 ```env
 BRAVE_API_KEY=your_brave_api_key
@@ -48,13 +55,15 @@ OPENAI_API_KEY=your_openai_api_key
 BRIGHTDATA_API_KEY=your_brightdata_api_key
 ```
 
-### Run
+### 4. Run the server
 
 ```bash
 uv run python run_local.py
 ```
 
 Open [http://127.0.0.1:8000](http://127.0.0.1:8000).
+
+> The server runs with hot-reload enabled. Any changes to source files will restart it automatically.
 
 ## Tests
 
