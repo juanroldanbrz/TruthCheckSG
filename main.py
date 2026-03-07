@@ -35,7 +35,7 @@ I18N = _load_i18n()
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request, "i18n": I18N})
+    return templates.TemplateResponse(request, "index.html", {"i18n": I18N})
 
 
 @app.post("/verify")
