@@ -256,11 +256,11 @@ textarea:focus {
   margin-bottom: 28px;
   background: var(--card-bg);
 }
-.verdict-card:has(.verdict-verified)     { border-left-color: var(--green);  background: #f0fdf4; }
-.verdict-card:has(.verdict-likely_true)  { border-left-color: #65a30d;       background: #f7fee7; }
-.verdict-card:has(.verdict-likely_false) { border-left-color: #ea580c;       background: #fff7ed; }
-.verdict-card:has(.verdict-false)        { border-left-color: var(--red);    background: #fff5f5; }
-.verdict-card:has(.verdict-unverified)   { border-left-color: var(--yellow); background: #fefce8; }
+.verdict-card:has(.verdict-true)         { border-left-color: #2E9E57; background: #f0fdf4; }
+.verdict-card:has(.verdict-likely_true)  { border-left-color: #7BC67E; background: #f7fee7; }
+.verdict-card:has(.verdict-likely_false) { border-left-color: #F59E0B; background: #fff7ed; }
+.verdict-card:has(.verdict-false)        { border-left-color: #EF2B2D; background: #fff5f5; }
+.verdict-card:has(.verdict-unverified)   { border-left-color: #9CA3AF; background: #f9fafb; }
 
 .verdict-badge {
   display: inline-block;
@@ -272,11 +272,11 @@ textarea:focus {
   letter-spacing: 1.5px;
   text-transform: uppercase;
 }
-.verdict-verified     { background: #dcfce7; color: var(--green); }
-.verdict-likely_true  { background: #ecfccb; color: #65a30d; }
-.verdict-likely_false { background: #ffedd5; color: #ea580c; }
-.verdict-false        { background: #fee2e2; color: var(--red); }
-.verdict-unverified   { background: #fef9c3; color: var(--yellow); }
+.verdict-true         { background: #dcfce7; color: #2E9E57; }
+.verdict-likely_true  { background: #ecfccb; color: #7BC67E; }
+.verdict-likely_false { background: #ffedd5; color: #F59E0B; }
+.verdict-false        { background: #fee2e2; color: #EF2B2D; }
+.verdict-unverified   { background: #f3f4f6; color: #9CA3AF; }
 
 .result-summary {
   font-family: 'Source Serif 4', Georgia, serif;
