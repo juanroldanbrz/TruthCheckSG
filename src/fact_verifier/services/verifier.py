@@ -154,7 +154,6 @@ async def describe_image(image_bytes: bytes, image_content_type: str) -> str:
             {"type": "image_url", "image_url": {"url": f"data:{image_content_type};base64,{b64}"}},
         ]}],
         max_completion_tokens=80,
-        temperature=0,
     )
     if not response.choices:
         return ""
@@ -179,7 +178,6 @@ async def parse_claim(
             {"role": "user", "content": user_content},
         ],
         max_completion_tokens=200,
-        temperature=0,
         response_format=PARSE_CLAIM_SCHEMA,
     )
     if not response.choices:
@@ -210,7 +208,6 @@ async def verify_claim(
             {"role": "user", "content": user_content},
         ],
         max_completion_tokens=2000,
-        temperature=0.1,
         response_format=VERIFY_SCHEMA,
     )
     if not response.choices:
