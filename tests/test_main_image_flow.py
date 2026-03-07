@@ -1,3 +1,4 @@
+import asyncio
 import io
 import pytest
 from httpx import AsyncClient, ASGITransport
@@ -9,14 +10,8 @@ def make_analysis(ocr_text="Agent text", intent="Sell a course"):
     return ImageAnalysis(ocr_text=ocr_text, intent=intent)
 
 
-async def aiter(items):
-    for item in items:
-        yield item
-
-
 @pytest.mark.asyncio
 async def test_image_only_builds_claim_with_explicit_labels():
-    import asyncio
     analysis = make_analysis("I am a real estate agent", "Sell a millionaire course")
 
     captured = {}
@@ -44,18 +39,18 @@ async def test_image_only_builds_claim_with_explicit_labels():
     assert response.status_code == 200
     assert "Image text:" in captured["claim"]
     assert "Image intent:" in captured["claim"]
-    assert captured["image_bytes"] is not None  # image must reach pipeline
+    assert captured["image_bytes"] is not None
 
 
 @pytest.mark.asyncio
 async def test_image_plus_text_appends_image_context():
-    import asyncio
     analysis = make_analysis("Free money scheme", "Scam to collect personal data")
 
     captured = {}
 
     async def fake_pipeline(claim, language, image_bytes=None, image_content_type=None):
         captured["claim"] = claim
+        captured["image_bytes"] = image_bytes
         return
         yield
 
@@ -76,3 +71,4 @@ async def test_image_plus_text_appends_image_context():
     assert "Is this a scam?" in captured["claim"]
     assert "Image text:" in captured["claim"]
     assert "Image intent:" in captured["claim"]
+    assert captured["image_bytes"] is not None
