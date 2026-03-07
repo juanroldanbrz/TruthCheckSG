@@ -51,13 +51,7 @@ uv sync --dev
 
 This creates a `.venv` folder and installs all dependencies (including dev tools).
 
-### 3. Install Playwright browsers (for e2e tests)
-
-```bash
-uv run playwright install chromium
-```
-
-### 4. Configure environment variables
+### 3. Configure environment variables
 
 Create a `.env` file in the project root:
 
@@ -69,7 +63,7 @@ MONGODB_URL=mongodb://localhost:27017
 MONGODB_DB=fact_verifier
 ```
 
-### 5. Run the server
+### 4. Run the server
 
 ```bash
 uv run python run_local.py
@@ -85,6 +79,6 @@ Open [http://127.0.0.1:8000](http://127.0.0.1:8000).
 # Unit tests
 uv run pytest tests/ --ignore=tests/e2e -v
 
-# E2E tests (requires running app + valid API keys)
+# E2E tests
 uv run pytest tests/e2e/ -v
 ```

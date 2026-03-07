@@ -32,19 +32,8 @@ jobs:
       - name: Install dependencies
         run: uv sync --dev
 
-      - name: Install Playwright browsers
-        run: uv run playwright install chromium --with-deps
-
       - name: Run unit tests
         run: uv run pytest tests/ --ignore=tests/e2e -q
 
       - name: Run E2E tests
         run: uv run pytest tests/e2e -q --tb=short
-
-      - name: Upload Playwright traces on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-traces
-          path: test-results/
-          retention-days: 7

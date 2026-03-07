@@ -36,10 +36,19 @@ def _make_parse_response(parsed):
     return mock_response
 
 
+def _make_mock_client(parsed=None, *, side_effect=None):
+    mock_client = MagicMock()
+    mock_parse = AsyncMock(side_effect=side_effect)
+    if side_effect is None:
+        mock_parse.return_value = _make_parse_response(parsed)
+    mock_client.beta.chat.completions.parse = mock_parse
+    return mock_client, mock_parse
+
+
 @pytest.mark.asyncio
 async def test_verify_returns_structured_result():
-    with patch("fact_verifier.services.verifier.client.beta.chat.completions.parse", new_callable=AsyncMock) as mock_parse:
-        mock_parse.return_value = _make_parse_response(MOCK_FACT_CHECK)
+    mock_client, _ = _make_mock_client(MOCK_FACT_CHECK)
+    with patch("fact_verifier.services.verifier.get_client", return_value=mock_client):
         from fact_verifier.services.verifier import verify_claim
         result = await verify_claim("CPF age raised to 70", MOCK_SOURCES, "en")
         assert result["verdict"] in ("true", "likely_true", "false", "likely_false", "unverified")
@@ -51,8 +60,8 @@ async def test_verify_returns_structured_result():
 
 @pytest.mark.asyncio
 async def test_verify_passes_language_to_prompt():
-    with patch("fact_verifier.services.verifier.client.beta.chat.completions.parse", new_callable=AsyncMock) as mock_parse:
-        mock_parse.return_value = _make_parse_response(MOCK_FACT_CHECK)
+    mock_client, mock_parse = _make_mock_client(MOCK_FACT_CHECK)
+    with patch("fact_verifier.services.verifier.get_client", return_value=mock_client):
         from fact_verifier.services.verifier import verify_claim
         await verify_claim("some claim", MOCK_SOURCES, "zh")
         call_args = mock_parse.call_args
@@ -62,8 +71,8 @@ async def test_verify_passes_language_to_prompt():
 
 @pytest.mark.asyncio
 async def test_verify_raises_when_parsed_is_none():
-    with patch("fact_verifier.services.verifier.client.beta.chat.completions.parse", new_callable=AsyncMock) as mock_parse:
-        mock_parse.return_value = _make_parse_response(None)
+    mock_client, _ = _make_mock_client(None)
+    with patch("fact_verifier.services.verifier.get_client", return_value=mock_client):
         from fact_verifier.services.verifier import verify_claim
         with pytest.raises(Exception):
             await verify_claim("some claim", MOCK_SOURCES, "en")
@@ -74,8 +83,8 @@ async def test_parse_claim_with_image_sends_multimodal_message():
     """When image_bytes provided, parse_claim must send a list content (text + image_url)."""
     mock_parsed = ClaimParseResult(is_relevant=True, search_query="investment scam")
 
-    with patch("fact_verifier.services.verifier.client.beta.chat.completions.parse", new_callable=AsyncMock) as mock_parse:
-        mock_parse.return_value = _make_parse_response(mock_parsed)
+    mock_client, mock_parse = _make_mock_client(mock_parsed)
+    with patch("fact_verifier.services.verifier.get_client", return_value=mock_client):
         from fact_verifier.services.verifier import parse_claim
         await parse_claim("is this an investment scam?", "en", image_bytes=b"fakebytes", image_content_type="image/jpeg")
 
@@ -92,8 +101,8 @@ async def test_parse_claim_with_image_and_question_returns_relevant():
     """Image + question combo must be marked as relevant (not rejected as a bare question)."""
     mock_parsed = ClaimParseResult(is_relevant=True, search_query="investment scam Singapore Telegram")
 
-    with patch("fact_verifier.services.verifier.client.beta.chat.completions.parse", new_callable=AsyncMock) as mock_parse:
-        mock_parse.return_value = _make_parse_response(mock_parsed)
+    mock_client, _ = _make_mock_client(mock_parsed)
+    with patch("fact_verifier.services.verifier.get_client", return_value=mock_client):
         from fact_verifier.services.verifier import parse_claim
         result = await parse_claim("is this an investment scam?", "en", image_bytes=b"fakebytes", image_content_type="image/jpeg")
         assert result["is_relevant"] is True
@@ -102,8 +111,8 @@ async def test_parse_claim_with_image_and_question_returns_relevant():
 @pytest.mark.asyncio
 async def test_verify_claim_with_image_sends_multimodal_message():
     """When image_bytes provided, verify_claim must include the image in the user message."""
-    with patch("fact_verifier.services.verifier.client.beta.chat.completions.parse", new_callable=AsyncMock) as mock_parse:
-        mock_parse.return_value = _make_parse_response(MOCK_FACT_CHECK)
+    mock_client, mock_parse = _make_mock_client(MOCK_FACT_CHECK)
+    with patch("fact_verifier.services.verifier.get_client", return_value=mock_client):
         from fact_verifier.services.verifier import verify_claim
         await verify_claim(
             "is this an investment scam?",
