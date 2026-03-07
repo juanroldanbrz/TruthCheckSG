@@ -6,7 +6,10 @@ if settings.langfuse_secret_key and settings.langfuse_public_key:
     os.environ.setdefault("LANGFUSE_SECRET_KEY", settings.langfuse_secret_key)
     os.environ.setdefault("LANGFUSE_PUBLIC_KEY", settings.langfuse_public_key)
     os.environ.setdefault("LANGFUSE_HOST", settings.langfuse_host)
-    from langfuse.openai import AsyncOpenAI
+    try:
+        from langfuse.openai import AsyncOpenAI
+    except Exception:
+        from openai import AsyncOpenAI
 else:
     from openai import AsyncOpenAI
 
