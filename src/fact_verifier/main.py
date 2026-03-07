@@ -15,6 +15,7 @@ from fact_verifier.config import settings
 from fact_verifier.services.database import connect, disconnect, save_verification, get_verification, get_verification_image
 from fact_verifier.services.ocr import extract_text_from_image
 from fact_verifier.services.pipeline import run_pipeline
+from fact_verifier.services.verifier import describe_image
 
 # In-memory task store: task_id -> asyncio.Queue
 _task_queues: dict[str, asyncio.Queue] = {}
@@ -101,8 +102,17 @@ async def verify(
     _task_queues[task_id] = queue
     _task_timestamps[task_id] = time.monotonic()
 
+    is_image_only = raw_image_bytes is not None and not text.strip()
+
     async def background():
         try:
+            image_description = None
+            if is_image_only:
+                try:
+                    image_description = await describe_image(raw_image_bytes, raw_image_content_type)
+                except Exception:
+                    pass
+
             async for event in run_pipeline(
                 claim,
                 language,
@@ -118,6 +128,8 @@ async def verify(
                     event["share_id"] = share_id
                     event["has_image"] = raw_image_bytes is not None
                     event["claim"] = claim
+                    if image_description:
+                        event["image_description"] = image_description
                 await queue.put(event)
         except Exception:
             await queue.put({"type": "error", "message": "error_generic"})

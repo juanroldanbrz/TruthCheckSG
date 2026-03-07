@@ -130,6 +130,23 @@ def _build_user_content(text: str, image_bytes: bytes | None, image_content_type
     ]
 
 
+async def describe_image(image_bytes: bytes, image_content_type: str) -> str:
+    import base64
+    b64 = base64.b64encode(image_bytes).decode("utf-8")
+    response = await client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": [
+            {"type": "text", "text": "Describe what this image is about in one concise sentence."},
+            {"type": "image_url", "image_url": {"url": f"data:{image_content_type};base64,{b64}"}},
+        ]}],
+        max_tokens=80,
+        temperature=0,
+    )
+    if not response.choices:
+        return ""
+    return response.choices[0].message.content.strip()
+
+
 async def parse_claim(
     claim: str,
     language: str = "en",
