@@ -16,7 +16,14 @@ SYSTEM_PROMPT = """You are a fact-checking assistant for Singapore.
 You will receive a claim and a list of sources with their content.
 Respond ONLY in {language}.
 Analyse the sources and produce a structured fact-check result.
-Sort sources: government first, then news, then other."""
+Sort sources: government first, then news, then other.
+
+Use the following five-tier verdict scale:
+- true: The claim is correct. Reliable sources confirm this.
+- likely_true: Mostly correct but small details may be unclear. Most evidence supports this claim.
+- unverified: Not enough information to confirm or deny. Cannot determine if true or false yet.
+- likely_false: Evidence suggests it is probably wrong. Most reliable sources say this is not correct.
+- false: The claim is incorrect. Reliable sources show this claim is not true."""
 
 VERIFY_SCHEMA = {
     "type": "json_schema",
@@ -26,7 +33,7 @@ VERIFY_SCHEMA = {
         "schema": {
             "type": "object",
             "properties": {
-                "verdict": {"type": "string", "enum": ["verified", "likely_true", "likely_false", "false", "unverified"]},
+                "verdict": {"type": "string", "enum": ["true", "likely_true", "likely_false", "false", "unverified"]},
                 "summary": {"type": "string"},
                 "explanation": {"type": "string"},
                 "sources": {
