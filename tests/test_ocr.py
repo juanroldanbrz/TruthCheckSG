@@ -25,3 +25,12 @@ async def test_extract_text_returns_none_on_empty_response():
         from services.ocr import extract_text_from_image
         result = await extract_text_from_image(b"fake_image_bytes", "image/png")
         assert result is None
+
+
+@pytest.mark.asyncio
+async def test_extract_text_returns_none_on_api_error():
+    with patch("services.ocr.client.chat.completions.create", new_callable=AsyncMock) as mock_create:
+        mock_create.side_effect = Exception("API timeout")
+        from services.ocr import extract_text_from_image
+        result = await extract_text_from_image(b"fake_image_bytes", "image/png")
+        assert result is None
