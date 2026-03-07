@@ -459,9 +459,17 @@ h2 {
   color: var(--muted);
 }
 
+.sidebar-balancer {
+  width: 260px;
+  flex-shrink: 0;
+}
+
 @media (max-width: 767px) {
   .app-layout {
     flex-direction: column;
+  }
+  .sidebar-balancer {
+    display: none;
   }
   #history-sidebar {
     width: 100%;
