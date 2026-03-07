@@ -1,6 +1,6 @@
 # TruthCheckSG
 
-A fact-checking web app for Singapore. Submit a claim in text or as a screenshot — the app searches the web, reads the sources, and returns a verdict with evidence.
+A fact-checking web app for Singapore. Submit a claim in text or as a screenshot — the app searches the web, reads the sources, and returns a verdict with evidence. Results are stored in MongoDB and can be shared via a permanent link.
 
 ## How it works
 
@@ -8,6 +8,7 @@ A fact-checking web app for Singapore. Submit a claim in text or as a screenshot
 2. **Search** — Brave Search API finds the top sources.
 3. **Crawl** — Sources are fetched in parallel via Bright Data's unlocker proxy and extracted to plain text.
 4. **Verify** — GPT-4o analyses the sources and returns a structured verdict: `verified`, `false`, or `unverified`, with a summary, explanation, and ranked sources.
+5. **Share** — Each result is stored in MongoDB and accessible via a permanent `/share/<id>` URL.
 
 ## Features
 
@@ -15,6 +16,7 @@ A fact-checking web app for Singapore. Submit a claim in text or as a screenshot
 - Image upload with OCR (extract claims from screenshots)
 - Server-Sent Events for real-time progress updates
 - Source credibility tiers: Government → News → Other
+- Shareable result links backed by MongoDB
 
 ## Stack
 
@@ -22,6 +24,7 @@ A fact-checking web app for Singapore. Submit a claim in text or as a screenshot
 - **AI:** OpenAI GPT-4o with structured output
 - **Search:** Brave Search API
 - **Crawling:** Bright Data unlocker (parallel)
+- **Database:** MongoDB (Motor async driver)
 - **Frontend:** Vanilla JS + Jinja2 templates
 
 ## Setup
@@ -30,8 +33,15 @@ A fact-checking web app for Singapore. Submit a claim in text or as a screenshot
 
 - Python 3.14+
 - [uv](https://docs.astral.sh/uv/)
+- Docker (for MongoDB)
 
-### 1. Create the virtual environment and install dependencies
+### 1. Start MongoDB
+
+```bash
+docker compose up -d
+```
+
+### 2. Create the virtual environment and install dependencies
 
 ```bash
 uv sync --dev
@@ -39,13 +49,13 @@ uv sync --dev
 
 This creates a `.venv` folder and installs all dependencies (including dev tools).
 
-### 2. Install Playwright browsers (for e2e tests)
+### 3. Install Playwright browsers (for e2e tests)
 
 ```bash
 uv run playwright install chromium
 ```
 
-### 3. Configure environment variables
+### 4. Configure environment variables
 
 Create a `.env` file in the project root:
 
@@ -53,9 +63,11 @@ Create a `.env` file in the project root:
 BRAVE_API_KEY=your_brave_api_key
 OPENAI_API_KEY=your_openai_api_key
 BRIGHTDATA_API_KEY=your_brightdata_api_key
+MONGODB_URL=mongodb://localhost:27017
+MONGODB_DB=fact_verifier
 ```
 
-### 4. Run the server
+### 5. Run the server
 
 ```bash
 uv run python run_local.py
