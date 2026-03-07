@@ -28,6 +28,8 @@ async def run_pipeline(
     yield {"type": "progress", "step": 1, "message": "step_1"}
 
     search_results = await brave_search(search_query)
+    if not search_results and search_query != claim:
+        search_results = await brave_search(claim)
     if not search_results:
         yield {"type": "error", "message": "error_generic"}
         return
