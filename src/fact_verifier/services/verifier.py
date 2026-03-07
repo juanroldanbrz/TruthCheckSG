@@ -1,6 +1,14 @@
+import os
 from datetime import datetime, timezone
-from openai import AsyncOpenAI
 from fact_verifier.config import settings
+
+if settings.langfuse_secret_key and settings.langfuse_public_key:
+    os.environ.setdefault("LANGFUSE_SECRET_KEY", settings.langfuse_secret_key)
+    os.environ.setdefault("LANGFUSE_PUBLIC_KEY", settings.langfuse_public_key)
+    os.environ.setdefault("LANGFUSE_HOST", settings.langfuse_host)
+    from langfuse.openai import AsyncOpenAI
+else:
+    from openai import AsyncOpenAI
 
 client = AsyncOpenAI(api_key=settings.openai_api_key)
 
@@ -53,7 +61,7 @@ Given a user input, determine:
 NOT a verifiable claim: questions ("how do I..."), recipes, opinions, greetings, nonsense.
 IS a verifiable claim: statements asserting facts ("X is Y", "X happened", "X costs Y")
 
-Always write search_query in English, regardless of the language of the input."""
+Always write search_query in {language}."""
 
 PARSE_CLAIM_SCHEMA = {
     "type": "json_schema",
@@ -90,9 +98,10 @@ def _build_sources_text(sources: list[dict]) -> str:
     return "\n\n---\n\n".join(parts)
 
 
-async def parse_claim(claim: str) -> dict:
+async def parse_claim(claim: str, language: str = "en") -> dict:
+    lang_name = LANGUAGE_NAMES.get(language, "English")
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-    system = f"{PARSE_CLAIM_PROMPT}\n\nCurrent timestamp: {now}"
+    system = PARSE_CLAIM_PROMPT.format(language=lang_name) + f"\n\nCurrent timestamp: {now}"
     response = await client.chat.completions.create(
         model="gpt-4o",
         messages=[

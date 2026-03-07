@@ -8,6 +8,9 @@ class Settings(BaseSettings):
     request_timeout: int = 90
     mongodb_url: str = "mongodb://localhost:27017"
     mongodb_db: str = "fact_verifier"
+    langfuse_secret_key: str = ""
+    langfuse_public_key: str = ""
+    langfuse_host: str = "http://localhost:3000"
 
     model_config = {"env_file": ".env"}
 

@@ -1,5 +1,9 @@
 # Fact Verifier SG — Development Guidelines
 
+## PR Requirements
+
+**All tests must pass before a PR can be merged.** Run the full test suite (unit + E2E) and confirm everything is green before opening or updating a PR.
+
 ## E2E Testing with Playwright
 
 **Every feature MUST have a Playwright E2E test.** No exceptions.
