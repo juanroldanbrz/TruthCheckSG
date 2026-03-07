@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title id="page-title">Fact Verifier SG</title>
+  <title id="page-title">TruthCheckSG</title>
+  <link rel="icon" href="/static/logo.png" type="image/png" />
   <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
@@ -11,7 +12,9 @@
   <script id="i18n-data" type="application/json">{{ i18n | tojson }}</script>
 
   <header>
-    <a href="/" class="home-link">TruthCheckSG</a>
+    <a href="/" class="home-link">
+      <img src="/static/logo.png" alt="TruthCheckSG" class="nav-logo" />
+    </a>
     <div class="lang-switcher">
       <button class="lang-btn active" data-lang="en">EN</button>
       <button class="lang-btn" data-lang="zh">中文</button>
@@ -107,6 +110,7 @@
   <script>
     window.__SHARED_RESULT__ = {{ shared_result | tojson }};
     window.__SHARED_CLAIM__ = {{ shared_claim | tojson }};
+    window.__SHARED_IMAGE_URL__ = {{ shared_image_url | tojson }};
   </script>
   {% endif %}
   <script src="/static/app.js"></script>

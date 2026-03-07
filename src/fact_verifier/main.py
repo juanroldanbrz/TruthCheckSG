@@ -6,13 +6,13 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, Request, Form, UploadFile, File
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sse_starlette.sse import EventSourceResponse
 
 from fact_verifier.config import settings
-from fact_verifier.services.database import connect, disconnect, save_verification, get_verification
+from fact_verifier.services.database import connect, disconnect, save_verification, get_verification, get_verification_image
 from fact_verifier.services.ocr import extract_text_from_image
 from fact_verifier.services.pipeline import run_pipeline
 
@@ -106,8 +106,13 @@ async def verify(
                 image_content_type=pipeline_image_content_type,
             ):
                 if event.get("type") == "result":
-                    share_id = await save_verification(claim, language, event["data"])
+                    share_id = await save_verification(
+                        claim, language, event["data"],
+                        image_bytes=pipeline_image_bytes,
+                        image_content_type=pipeline_image_content_type,
+                    )
                     event["share_id"] = share_id
+                    event["has_image"] = pipeline_image_bytes is not None
                 await queue.put(event)
         except Exception:
             await queue.put({"type": "error", "message": "error_generic"})
@@ -145,8 +150,23 @@ async def share(request: Request, share_id: str):
     doc = await get_verification(share_id)
     if not doc:
         return JSONResponse({"error": "not found"}, status_code=404)
+    shared_image_url = f"/share/{share_id}/image" if doc.get("image_bytes") else None
     return templates.TemplateResponse(
         request,
         "index.html",
-        {"i18n": I18N, "shared_result": doc["result"], "shared_claim": doc["claim"]},
+        {
+            "i18n": I18N,
+            "shared_result": doc["result"],
+            "shared_claim": doc["claim"],
+            "shared_image_url": shared_image_url,
+        },
     )
+
+
+@app.get("/share/{share_id}/image")
+async def share_image(share_id: str):
+    result = await get_verification_image(share_id)
+    if not result:
+        return JSONResponse({"error": "not found"}, status_code=404)
+    image_bytes, content_type = result
+    return Response(content=image_bytes, media_type=content_type)

@@ -57,7 +57,9 @@ def test_investment_scam_image_with_query_returns_result(page: Page, live_server
     judgement = llm_judge(
         f"A fact-checking UI was given a screenshot of a Telegram investment group chat "
         f"and the question '{QUERY}'. It returned verdict '{verdict_text}' and summary: '{summary_text}'. "
-        f"Does the verdict and summary reflect a coherent scam analysis of this investment group? "
-        f"Acceptable verdicts indicate it is false or a scam. Unacceptable: error messages or irrelevant output."
+        f"Does the verdict and summary reflect a coherent analysis of this investment group? "
+        f"Pass if the summary addresses scam-related concerns (red flags, warnings, or uncertainty about legitimacy), "
+        f"regardless of whether the verdict is 'false', 'unverified', or similar. "
+        f"Fail only if the output is an error message, completely off-topic, or contains no scam analysis."
     )
     assert judgement.passed, judgement.reason

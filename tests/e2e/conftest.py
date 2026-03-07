@@ -1,3 +1,4 @@
+import os
 import threading
 import time
 
@@ -8,9 +9,17 @@ import uvicorn
 BASE_URL = "http://127.0.0.1:8765"
 
 
+@pytest.fixture
+def browser_context_args(browser_context_args):
+    return {**browser_context_args, "permissions": ["clipboard-read", "clipboard-write"]}
+
+
 @pytest.fixture(scope="session", autouse=True)
 def live_server():
+    from fact_verifier.config import settings
     from fact_verifier.main import app
+
+    os.environ.setdefault("OPENAI_API_KEY", settings.openai_api_key)
 
     config = uvicorn.Config(app, host="127.0.0.1", port=8765, log_level="error")
     server = uvicorn.Server(config)

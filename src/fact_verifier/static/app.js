@@ -114,8 +114,19 @@ function safeUrl(url) {
   }
 }
 
-function renderResult(data, shareId, claim) {
+function renderResult(data, shareId, claim, imageSrc) {
   document.getElementById('result-claim').textContent = claim || '';
+
+  const existingImg = document.getElementById('result-image');
+  if (existingImg) existingImg.remove();
+  if (imageSrc) {
+    const img = document.createElement('img');
+    img.id = 'result-image';
+    img.src = imageSrc;
+    img.alt = 'Uploaded image';
+    img.className = 'result-image';
+    document.getElementById('result-claim').after(img);
+  }
 
   const badge = document.getElementById('verdict-badge');
   badge.className = 'verdict-badge';
@@ -198,7 +209,8 @@ document.getElementById('verify-form').addEventListener('submit', async e => {
   es.addEventListener('result', e => {
     es.close();
     const data = JSON.parse(e.data);
-    renderResult(data.data || data, data.share_id, currentClaim);
+    const imageSrc = data.has_image && imagePreview.src ? imagePreview.src : null;
+    renderResult(data.data || data, data.share_id, currentClaim, imageSrc);
     showState('result');
   });
 
@@ -231,6 +243,6 @@ setLang('en');
 
 // Auto-display shared result when navigating to /share/<id>
 if (window.__SHARED_RESULT__) {
-  renderResult(window.__SHARED_RESULT__, null, window.__SHARED_CLAIM__ || '');
+  renderResult(window.__SHARED_RESULT__, null, window.__SHARED_CLAIM__ || '', window.__SHARED_IMAGE_URL__ || null);
   showState('result');
 }
