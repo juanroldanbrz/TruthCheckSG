@@ -101,7 +101,7 @@ function renderHistorySidebar() {
         { verdict: entry.verdict, summary: entry.summary, explanation: entry.explanation, sources: entry.sources },
         entry.shareId,
         entry.claim,
-        null
+        entry.imageUrl || null
       );
       showState('result');
     });
@@ -306,6 +306,7 @@ document.getElementById('verify-form').addEventListener('submit', async e => {
       explanation: resultData.explanation,
       sources: resultData.sources || [],
       shareId: data.share_id || null,
+      imageUrl: (data.has_image && data.share_id) ? '/share/' + data.share_id + '/image' : null,
     };
     addHistoryEntry(historyEntry);
     activeHistoryId = historyEntry.id;
