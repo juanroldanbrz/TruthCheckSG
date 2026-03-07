@@ -5,6 +5,12 @@ function t(key) {
   return (I18N[currentLang] && I18N[currentLang][key]) || I18N['en'][key] || key;
 }
 
+function safeCapture(event, props) {
+  if (typeof posthog !== 'undefined') {
+    posthog.capture(event, props);
+  }
+}
+
 function setLang(lang) {
   document.documentElement.setAttribute('lang', lang === 'zh' ? 'zh-Hans' : lang);
   currentLang = lang;
@@ -287,7 +293,7 @@ document.getElementById('verify-form').addEventListener('submit', async e => {
 
   submitTime = Date.now();
 
-  posthog.capture('claim_submitted', {
+  safeCapture('claim_submitted', {
     input_type: hasImage && text ? 'text_and_image' : hasImage ? 'image_only' : 'text_only',
     claim_text: text,
     language: currentLang,
@@ -305,7 +311,7 @@ document.getElementById('verify-form').addEventListener('submit', async e => {
     if (json.error) throw new Error(json.error);
     taskId = json.task_id;
   } catch (err) {
-    posthog.capture('verification_failed', {
+    safeCapture('verification_failed', {
       error_code: err.message || 'fetch_error',
       phase: 'fetch',
       duration_ms: submitTime !== null ? Date.now() - submitTime : null,
@@ -346,7 +352,7 @@ document.getElementById('verify-form').addEventListener('submit', async e => {
     renderHistorySidebar();
     showState('result');
 
-    posthog.capture('verification_completed', {
+    safeCapture('verification_completed', {
       verdict: resultData.verdict,
       duration_ms: submitTime !== null ? Date.now() - submitTime : null,
       language: currentLang,
@@ -365,7 +371,7 @@ document.getElementById('verify-form').addEventListener('submit', async e => {
     document.getElementById('error-message').textContent = msg;
     showState('error');
 
-    posthog.capture('verification_failed', {
+    safeCapture('verification_failed', {
       error_code: rawMessage,
       phase: 'stream',
       duration_ms: submitTime !== null ? Date.now() - submitTime : null,
