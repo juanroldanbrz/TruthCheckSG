@@ -90,6 +90,30 @@ async def test_pipeline_emits_error_on_no_search_results():
 
 
 @pytest.mark.asyncio
+async def test_pipeline_falls_back_to_claim_when_search_query_returns_nothing():
+    """When search_query returns no results but claim differs, pipeline retries with raw claim."""
+    events = []
+
+    with patch("fact_verifier.services.pipeline.parse_claim", new_callable=AsyncMock) as mock_parse, \
+         patch("fact_verifier.services.pipeline.brave_search", new_callable=AsyncMock) as mock_search, \
+         patch("fact_verifier.services.pipeline.fetch_all", new_callable=AsyncMock) as mock_fetch, \
+         patch("fact_verifier.services.pipeline.verify_claim", new_callable=AsyncMock) as mock_verify:
+
+        mock_parse.return_value = {"is_relevant": True, "search_query": "very specific query different from claim"}
+        mock_search.side_effect = [[], [{"url": "https://example.com", "title": "Example", "snippet": "info"}]]
+        mock_fetch.return_value = [{"url": "https://example.com", "markdown": "Content"}]
+        mock_verify.return_value = {"verdict": "false", "summary": "Not true.", "explanation": "Details.", "sources": []}
+
+        from fact_verifier.services.pipeline import run_pipeline
+        async for event in run_pipeline("some claim", "en"):
+            events.append(event)
+
+    assert any(e["type"] == "result" for e in events)
+    assert not any(e["type"] == "error" for e in events)
+    assert mock_search.call_count == 2
+
+
+@pytest.mark.asyncio
 async def test_pipeline_passes_image_to_parse_claim():
     """run_pipeline must pass image_bytes and image_content_type to parse_claim."""
     with patch("fact_verifier.services.pipeline.parse_claim", new_callable=AsyncMock) as mock_parse, \

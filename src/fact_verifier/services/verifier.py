@@ -1,5 +1,7 @@
 import os
 from datetime import datetime, timezone
+from typing import Literal
+from pydantic import BaseModel
 from openai import RateLimitError
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 from fact_verifier.config import settings
@@ -41,39 +43,20 @@ Writing rules — strictly follow these:
 - summary: 1 short sentence. Simple words. No jargon. Max 20 words.
 - explanation: exactly 3 bullet points. Each starts with "• ". Each is 1 short sentence. Simple words. No jargon. Separate bullets with a newline."""
 
-VERIFY_SCHEMA = {
-    "type": "json_schema",
-    "json_schema": {
-        "name": "fact_check_result",
-        "strict": True,
-        "schema": {
-            "type": "object",
-            "properties": {
-                "verdict": {"type": "string", "enum": ["true", "likely_true", "likely_false", "false", "unverified"]},
-                "summary": {"type": "string"},
-                "explanation": {"type": "string"},
-                "sources": {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "properties": {
-                            "url": {"type": "string"},
-                            "title": {"type": "string"},
-                            "tier": {"type": "string", "enum": ["government", "news", "other"]},
-                            "credibility_label": {"type": "string"},
-                            "stance": {"type": "string", "enum": ["supports", "contradicts", "neutral"]},
-                            "snippet": {"type": "string"},
-                        },
-                        "required": ["url", "title", "tier", "credibility_label", "stance", "snippet"],
-                        "additionalProperties": False,
-                    },
-                },
-            },
-            "required": ["verdict", "summary", "explanation", "sources"],
-            "additionalProperties": False,
-        },
-    },
-}
+class SourceResult(BaseModel):
+    url: str
+    title: str
+    tier: Literal["government", "news", "other"]
+    credibility_label: str
+    stance: Literal["supports", "contradicts", "neutral"]
+    snippet: str
+
+
+class FactCheckResult(BaseModel):
+    verdict: Literal["true", "likely_true", "likely_false", "false", "unverified"]
+    summary: str
+    explanation: str
+    sources: list[SourceResult]
 
 PARSE_CLAIM_PROMPT = """You are a pre-processing agent for a fact-checking system.
 
@@ -89,22 +72,13 @@ IS relevant: statements asserting facts ("X is Y", "X happened") OR questions ab
 When an image is provided alongside a question, treat the combination as a verifiable investigation.
 Always write search_query in {language}."""
 
-PARSE_CLAIM_SCHEMA = {
-    "type": "json_schema",
-    "json_schema": {
-        "name": "claim_parse_result",
-        "strict": True,
-        "schema": {
-            "type": "object",
-            "properties": {
-                "is_relevant": {"type": "boolean"},
-                "search_query": {"type": "string"},
-            },
-            "required": ["is_relevant", "search_query"],
-            "additionalProperties": False,
-        },
-    },
-}
+class ClaimParseResult(BaseModel):
+    is_relevant: bool
+    search_query: str
+
+
+class ImageDescription(BaseModel):
+    description: str
 
 LANGUAGE_NAMES = {
     "en": "English",
@@ -124,14 +98,6 @@ def _build_sources_text(sources: list[dict]) -> str:
     return "\n\n---\n\n".join(parts)
 
 
-def _strip_fenced_json(content: str) -> str:
-    content = content.strip()
-    if content.startswith("```"):
-        lines = content.splitlines()
-        return "\n".join(lines[1:-1]).strip()
-    return content
-
-
 def _build_user_content(text: str, image_bytes: bytes | None, image_content_type: str | None) -> str | list:
     if not image_bytes or not image_content_type:
         return text
@@ -147,17 +113,18 @@ def _build_user_content(text: str, image_bytes: bytes | None, image_content_type
 async def describe_image(image_bytes: bytes, image_content_type: str) -> str:
     import base64
     b64 = base64.b64encode(image_bytes).decode("utf-8")
-    response = await client.chat.completions.create(
-        model="gpt-5-mini-2025-08-07",
+    response = await client.beta.chat.completions.parse(
+        model=settings.openai_model,
         messages=[{"role": "user", "content": [
             {"type": "text", "text": "Describe what this image is about in one concise sentence."},
             {"type": "image_url", "image_url": {"url": f"data:{image_content_type};base64,{b64}"}},
         ]}],
-        max_completion_tokens=80,
+        max_completion_tokens=128000,
+        response_format=ImageDescription,
     )
     if not response.choices:
         return ""
-    return response.choices[0].message.content.strip()
+    return response.choices[0].message.parsed.description
 
 
 @_retry_on_rate_limit
@@ -171,19 +138,18 @@ async def parse_claim(
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     system = PARSE_CLAIM_PROMPT.format(language=lang_name) + f"\n\nCurrent timestamp: {now}"
     user_content = _build_user_content(claim, image_bytes, image_content_type)
-    response = await client.chat.completions.create(
-        model="gpt-5-mini-2025-08-07",
+    response = await client.beta.chat.completions.parse(
+        model=settings.openai_model,
         messages=[
             {"role": "system", "content": system},
             {"role": "user", "content": user_content},
         ],
-        max_completion_tokens=200,
-        response_format=PARSE_CLAIM_SCHEMA,
+        max_completion_tokens=128000,
+        response_format=ClaimParseResult,
     )
     if not response.choices:
         raise ValueError("OpenAI returned empty choices list")
-    import json
-    return json.loads(_strip_fenced_json(response.choices[0].message.content))
+    return response.choices[0].message.parsed.model_dump()
 
 
 @_retry_on_rate_limit
@@ -201,16 +167,15 @@ async def verify_claim(
     text_content = f"Claim to verify: {claim}\n\nSources:\n{sources_text}"
     user_content = _build_user_content(text_content, image_bytes, image_content_type)
 
-    response = await client.chat.completions.create(
-        model="gpt-5-mini-2025-08-07",
+    response = await client.beta.chat.completions.parse(
+        model=settings.openai_model,
         messages=[
             {"role": "system", "content": system},
             {"role": "user", "content": user_content},
         ],
-        max_completion_tokens=2000,
-        response_format=VERIFY_SCHEMA,
+        max_completion_tokens=128000,
+        response_format=FactCheckResult,
     )
     if not response.choices:
         raise ValueError("OpenAI returned empty choices list")
-    import json
-    return json.loads(_strip_fenced_json(response.choices[0].message.content))
+    return response.choices[0].message.parsed.model_dump()
