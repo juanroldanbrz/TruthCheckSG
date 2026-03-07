@@ -46,12 +46,17 @@ async def test_verify_image_with_text_preserves_text_query():
     """When both image and text are submitted, the text query must NOT be discarded."""
     import asyncio
     from fact_verifier.main import app
+    from fact_verifier.services.ocr import ImageAnalysis
 
     async def fake_pipeline(*args, **kwargs):
         return
         yield  # make it an async generator
 
-    with patch("fact_verifier.main.run_pipeline", side_effect=fake_pipeline) as mock_pipeline:
+    fake_analysis = ImageAnalysis(ocr_text="some text", intent="some intent")
+    with (
+        patch("fact_verifier.main.analyze_image", AsyncMock(return_value=fake_analysis)),
+        patch("fact_verifier.main.run_pipeline", side_effect=fake_pipeline) as mock_pipeline,
+    ):
         fake_image = b"\xff\xd8\xff"  # minimal JPEG header
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             response = await client.post(
@@ -66,7 +71,7 @@ async def test_verify_image_with_text_preserves_text_query():
         call_args = mock_pipeline.call_args
         assert call_args is not None, "run_pipeline was never called"
         claim_arg = call_args.args[0] if call_args.args else call_args.kwargs.get("claim")
-        assert claim_arg == "is this an investment scam?", f"Expected text query to be preserved, got: {claim_arg!r}"
+        assert "is this an investment scam?" in claim_arg, f"Expected text query to be preserved, got: {claim_arg!r}"
 
 
 @pytest.mark.asyncio
@@ -74,12 +79,17 @@ async def test_verify_image_with_text_passes_image_bytes_to_pipeline():
     """Image bytes must be forwarded to run_pipeline when image is uploaded."""
     import asyncio
     from fact_verifier.main import app
+    from fact_verifier.services.ocr import ImageAnalysis
 
     async def fake_pipeline(*args, **kwargs):
         return
         yield
 
-    with patch("fact_verifier.main.run_pipeline", side_effect=fake_pipeline) as mock_pipeline:
+    fake_analysis = ImageAnalysis(ocr_text="some text", intent="some intent")
+    with (
+        patch("fact_verifier.main.analyze_image", AsyncMock(return_value=fake_analysis)),
+        patch("fact_verifier.main.run_pipeline", side_effect=fake_pipeline) as mock_pipeline,
+    ):
         fake_image = b"\xff\xd8\xff"
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             await client.post(
