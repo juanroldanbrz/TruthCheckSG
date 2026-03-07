@@ -19,10 +19,7 @@ def _get_async_openai_class():
 
 def _build_clients():
     AsyncOpenAI = _get_async_openai_class()
-    if settings.openai_keys:
-        keys = [k.strip() for k in settings.openai_keys.split(",") if k.strip()]
-    else:
-        keys = [settings.openai_api_key]
+    keys = [k.strip() for k in settings.openai_keys.split(",") if k.strip()]
     return [AsyncOpenAI(api_key=key) for key in keys]
 
 

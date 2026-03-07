@@ -1,4 +1,3 @@
-import os
 import threading
 import time
 
@@ -16,10 +15,7 @@ def browser_context_args(browser_context_args):
 
 @pytest.fixture(scope="session", autouse=True)
 def live_server():
-    from fact_verifier.config import settings
     from fact_verifier.main import app
-
-    os.environ.setdefault("OPENAI_API_KEY", settings.openai_api_key)
 
     config = uvicorn.Config(app, host="127.0.0.1", port=8765, log_level="error")
     server = uvicorn.Server(config)
