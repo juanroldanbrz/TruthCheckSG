@@ -1,0 +1,42 @@
+import asyncio
+from typing import AsyncGenerator
+from services.search import brave_search
+from services.scraper import fetch_all
+from services.verifier import verify_claim
+from services.tier import classify_tier
+
+
+async def run_pipeline(
+    claim: str, language: str = "en"
+) -> AsyncGenerator[dict, None]:
+
+    yield {"type": "progress", "step": 1, "message": "step_1"}
+
+    search_results = await brave_search(claim)
+    if not search_results:
+        yield {"type": "error", "message": "error_generic"}
+        return
+
+    for r in search_results:
+        r["tier"] = classify_tier(r["url"])
+
+    yield {"type": "progress", "step": 2, "message": "step_2"}
+
+    urls = [r["url"] for r in search_results]
+    fetched = await fetch_all(urls)
+
+    fetched_map = {f["url"]: f["markdown"] for f in fetched}
+    for r in search_results:
+        r["markdown"] = fetched_map.get(r["url"], "")
+
+    sources_with_content = [r for r in search_results if r.get("markdown")]
+    if not sources_with_content:
+        sources_with_content = search_results
+
+    yield {"type": "progress", "step": 3, "message": "step_3"}
+
+    try:
+        result = await verify_claim(claim, sources_with_content, language)
+        yield {"type": "result", "data": result}
+    except Exception:
+        yield {"type": "error", "message": "error_generic"}
