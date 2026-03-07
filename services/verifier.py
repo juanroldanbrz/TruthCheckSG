@@ -59,6 +59,8 @@ async def verify_claim(claim: str, sources: list[dict], language: str = "en") ->
         max_tokens=2000,
         temperature=0.1,
     )
+    if not response.choices:
+        raise ValueError("OpenAI returned empty choices list")
     content = response.choices[0].message.content.strip()
     # Strip markdown code fences if GPT wraps the JSON despite being told not to
     if content.startswith("```"):

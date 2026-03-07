@@ -6,6 +6,7 @@ function t(key) {
 }
 
 function setLang(lang) {
+  document.documentElement.setAttribute('lang', lang === 'zh' ? 'zh-Hans' : lang);
   currentLang = lang;
   document.getElementById('language-input').value = lang;
 
@@ -102,6 +103,16 @@ function escHtml(str) {
     .replace(/"/g, '&quot;');
 }
 
+function safeUrl(url) {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return '#';
+    return url;
+  } catch (_) {
+    return '#';
+  }
+}
+
 function renderResult(data) {
   const badge = document.getElementById('verdict-badge');
   badge.className = 'verdict-badge';
@@ -123,9 +134,10 @@ function renderResult(data) {
       '<div class="source-header">' +
         '<span class="tier-badge tier-' + escHtml(source.tier) + '">' + escHtml(tierLabel) + '</span>' +
         '<span class="stance-tag stance-' + escHtml(source.stance) + '">' + escHtml(stanceLabel) + '</span>' +
+        '<span class="credibility-label">' + escHtml(source.credibility_label || '') + '</span>' +
       '</div>' +
       '<div class="source-title">' + escHtml(source.title || '') + '</div>' +
-      '<div class="source-url"><a href="' + escHtml(source.url) + '" target="_blank" rel="noopener noreferrer">' + escHtml(source.url) + '</a></div>' +
+      '<div class="source-url"><a href="' + escHtml(safeUrl(source.url)) + '" target="_blank" rel="noopener noreferrer">' + escHtml(source.url) + '</a></div>' +
       '<div class="source-snippet">' + escHtml(source.snippet || '') + '</div>';
     list.appendChild(card);
   });

@@ -1,6 +1,8 @@
 import asyncio
 import json
+import time
 import uuid
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, Request, Form, UploadFile, File
@@ -13,12 +15,31 @@ from config import settings
 from services.ocr import extract_text_from_image
 from services.pipeline import run_pipeline
 
-app = FastAPI(title="Fact Verifier SG")
-app.mount("/static", StaticFiles(directory=str(Path(__file__).parent / "static")), name="static")
-templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
-
 # In-memory task store: task_id -> asyncio.Queue
 _task_queues: dict[str, asyncio.Queue] = {}
+_task_timestamps: dict[str, float] = {}
+QUEUE_TTL = 120  # seconds
+
+
+async def _cleanup_stale_queues():
+    while True:
+        await asyncio.sleep(30)
+        now = time.monotonic()
+        stale = [tid for tid, ts in _task_timestamps.items() if now - ts > QUEUE_TTL]
+        for tid in stale:
+            _task_queues.pop(tid, None)
+            _task_timestamps.pop(tid, None)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    asyncio.create_task(_cleanup_stale_queues())
+    yield
+
+
+app = FastAPI(title="Fact Verifier SG", lifespan=lifespan)
+app.mount("/static", StaticFiles(directory=str(Path(__file__).parent / "static")), name="static")
+templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
 
 
 def _load_i18n() -> dict:
@@ -49,6 +70,9 @@ async def verify(
 
     if image and image.filename:
         image_bytes = await image.read()
+        ALLOWED_IMAGE_TYPES = {"image/png", "image/jpeg", "image/webp"}
+        if image.content_type not in ALLOWED_IMAGE_TYPES:
+            return JSONResponse({"error": "error_no_text"}, status_code=422)
         extracted = await extract_text_from_image(image_bytes, image.content_type)
         if not extracted:
             return JSONResponse({"error": "error_no_text"}, status_code=422)
@@ -60,11 +84,16 @@ async def verify(
     task_id = str(uuid.uuid4())
     queue: asyncio.Queue = asyncio.Queue()
     _task_queues[task_id] = queue
+    _task_timestamps[task_id] = time.monotonic()
 
     async def background():
-        async for event in run_pipeline(claim, language):
-            await queue.put(event)
-        await queue.put(None)  # sentinel
+        try:
+            async for event in run_pipeline(claim, language):
+                await queue.put(event)
+        except Exception:
+            await queue.put({"type": "error", "message": "error_generic"})
+        finally:
+            await queue.put(None)  # sentinel always sent
 
     asyncio.create_task(background())
     return JSONResponse({"task_id": task_id})
@@ -87,5 +116,6 @@ async def stream(task_id: str):
             yield {"event": "error", "data": json.dumps({"message": "error_generic"})}
         finally:
             _task_queues.pop(task_id, None)
+            _task_timestamps.pop(task_id, None)
 
     return EventSourceResponse(event_generator())
