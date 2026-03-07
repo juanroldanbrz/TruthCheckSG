@@ -25,6 +25,7 @@ function setLang(lang) {
   document.getElementById('step-3-label').textContent = t('step_3');
   document.getElementById('reset-btn').textContent = t('reset_button');
   document.getElementById('error-reset-btn').textContent = t('reset_button');
+  document.getElementById('share-btn').textContent = t('share_button');
 }
 
 // Language switcher
@@ -113,7 +114,7 @@ function safeUrl(url) {
   }
 }
 
-function renderResult(data) {
+function renderResult(data, shareId) {
   const badge = document.getElementById('verdict-badge');
   badge.className = 'verdict-badge';
   badge.textContent = t('verdict_' + data.verdict);
@@ -122,6 +123,15 @@ function renderResult(data) {
   document.getElementById('result-summary').textContent = data.summary || '';
   document.getElementById('result-explanation').textContent = data.explanation || '';
   document.getElementById('sources-title').textContent = t('sources_title');
+
+  const shareContainer = document.getElementById('share-container');
+  if (shareId) {
+    const shareUrl = window.location.origin + '/share/' + shareId;
+    document.getElementById('share-url').value = shareUrl;
+    shareContainer.hidden = false;
+  } else {
+    shareContainer.hidden = true;
+  }
 
   const list = document.getElementById('sources-list');
   list.innerHTML = '';
@@ -183,7 +193,7 @@ document.getElementById('verify-form').addEventListener('submit', async e => {
   es.addEventListener('result', e => {
     es.close();
     const data = JSON.parse(e.data);
-    renderResult(data.data || data);
+    renderResult(data.data || data, data.share_id);
     showState('result');
   });
 
@@ -200,5 +210,22 @@ document.getElementById('verify-form').addEventListener('submit', async e => {
 document.getElementById('reset-btn').addEventListener('click', () => showState('input'));
 document.getElementById('error-reset-btn').addEventListener('click', () => showState('input'));
 
+// Share button — copy URL to clipboard
+document.getElementById('share-btn').addEventListener('click', () => {
+  const url = document.getElementById('share-url').value;
+  navigator.clipboard.writeText(url).then(() => {
+    const btn = document.getElementById('share-btn');
+    const original = btn.textContent;
+    btn.textContent = t('share_copied');
+    setTimeout(() => { btn.textContent = original; }, 2000);
+  });
+});
+
 // Initialise with English
 setLang('en');
+
+// Auto-display shared result when navigating to /share/<id>
+if (window.__SHARED_RESULT__) {
+  renderResult(window.__SHARED_RESULT__);
+  showState('result');
+}

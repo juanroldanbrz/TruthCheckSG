@@ -71,6 +71,11 @@
       <h2 id="sources-title"></h2>
       <div id="sources-list"></div>
 
+      <div id="share-container" hidden style="margin-top:1rem">
+        <input type="text" id="share-url" readonly style="width:100%;margin-bottom:0.5rem;padding:0.5rem;font-size:0.9rem" />
+        <button id="share-btn" class="btn-secondary"></button>
+      </div>
+
       <button id="reset-btn" class="btn-secondary"></button>
     </section>
 
@@ -81,6 +86,12 @@
     </section>
   </main>
 
+  {% if shared_result is defined and shared_result %}
+  <script>
+    window.__SHARED_RESULT__ = {{ shared_result | tojson }};
+    window.__SHARED_CLAIM__ = {{ shared_claim | tojson }};
+  </script>
+  {% endif %}
   <script src="/static/app.js"></script>
 </body>
 </html>

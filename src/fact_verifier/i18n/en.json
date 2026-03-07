@@ -22,5 +22,8 @@
   "error_empty": "Please enter a claim or upload an image.",
   "error_generic": "Something went wrong. Please try again.",
   "error_no_text": "Could not extract text from image. Please try again.",
-  "limited_sources": "Limited sources found."
+  "error_not_relevant": "This doesn't appear to be a verifiable factual claim. Please enter a statement you'd like fact-checked.",
+  "limited_sources": "Limited sources found.",
+  "share_button": "Copy share link",
+  "share_copied": "Copied!"
 }

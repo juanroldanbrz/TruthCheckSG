@@ -11,9 +11,10 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sse_starlette.sse import EventSourceResponse
 
-from config import settings
-from services.ocr import extract_text_from_image
-from services.pipeline import run_pipeline
+from fact_verifier.config import settings
+from fact_verifier.services.database import connect, disconnect, save_verification, get_verification
+from fact_verifier.services.ocr import extract_text_from_image
+from fact_verifier.services.pipeline import run_pipeline
 
 # In-memory task store: task_id -> asyncio.Queue
 _task_queues: dict[str, asyncio.Queue] = {}
@@ -33,8 +34,10 @@ async def _cleanup_stale_queues():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    await connect()
     asyncio.create_task(_cleanup_stale_queues())
     yield
+    await disconnect()
 
 
 app = FastAPI(title="Fact Verifier SG", lifespan=lifespan)
@@ -89,6 +92,9 @@ async def verify(
     async def background():
         try:
             async for event in run_pipeline(claim, language):
+                if event.get("type") == "result":
+                    share_id = await save_verification(claim, language, event["data"])
+                    event["share_id"] = share_id
                 await queue.put(event)
         except Exception:
             await queue.put({"type": "error", "message": "error_generic"})
@@ -119,3 +125,15 @@ async def stream(task_id: str):
             _task_timestamps.pop(task_id, None)
 
     return EventSourceResponse(event_generator())
+
+
+@app.get("/share/{share_id}", response_class=HTMLResponse)
+async def share(request: Request, share_id: str):
+    doc = await get_verification(share_id)
+    if not doc:
+        return JSONResponse({"error": "not found"}, status_code=404)
+    return templates.TemplateResponse(
+        request,
+        "index.html",
+        {"i18n": I18N, "shared_result": doc["result"], "shared_claim": doc["claim"]},
+    )

@@ -1,18 +1,30 @@
 import asyncio
 from typing import AsyncGenerator
-from services.search import brave_search
-from services.scraper import fetch_all
-from services.verifier import verify_claim
-from services.tier import classify_tier
+from fact_verifier.services.search import brave_search
+from fact_verifier.services.scraper import fetch_all
+from fact_verifier.services.verifier import verify_claim, parse_claim
+from fact_verifier.services.tier import classify_tier
 
 
 async def run_pipeline(
     claim: str, language: str = "en"
 ) -> AsyncGenerator[dict, None]:
 
+    try:
+        parsed = await parse_claim(claim)
+    except Exception:
+        yield {"type": "error", "message": "error_generic"}
+        return
+
+    if not parsed.get("is_relevant"):
+        yield {"type": "error", "message": "error_not_relevant"}
+        return
+
+    search_query = parsed.get("search_query") or claim
+
     yield {"type": "progress", "step": 1, "message": "step_1"}
 
-    search_results = await brave_search(claim)
+    search_results = await brave_search(search_query)
     if not search_results:
         yield {"type": "error", "message": "error_generic"}
         return

@@ -1,4 +1,4 @@
-from services.tier import classify_tier
+from fact_verifier.services.tier import classify_tier
 
 
 def test_gov_sg_is_government():

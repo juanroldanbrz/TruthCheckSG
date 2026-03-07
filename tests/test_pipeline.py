@@ -6,9 +6,9 @@ from unittest.mock import AsyncMock, patch
 async def test_pipeline_emits_progress_and_result_events():
     events = []
 
-    with patch("services.pipeline.brave_search", new_callable=AsyncMock) as mock_search, \
-         patch("services.pipeline.fetch_all", new_callable=AsyncMock) as mock_fetch, \
-         patch("services.pipeline.verify_claim", new_callable=AsyncMock) as mock_verify:
+    with patch("fact_verifier.services.pipeline.brave_search", new_callable=AsyncMock) as mock_search, \
+         patch("fact_verifier.services.pipeline.fetch_all", new_callable=AsyncMock) as mock_fetch, \
+         patch("fact_verifier.services.pipeline.verify_claim", new_callable=AsyncMock) as mock_verify:
 
         mock_search.return_value = [
             {"url": "https://www.moh.gov.sg/a", "title": "MOH", "snippet": "info"}
@@ -23,7 +23,7 @@ async def test_pipeline_emits_progress_and_result_events():
             "sources": [],
         }
 
-        from services.pipeline import run_pipeline
+        from fact_verifier.services.pipeline import run_pipeline
         async for event in run_pipeline("some claim", "en"):
             events.append(event)
 
@@ -37,9 +37,9 @@ async def test_pipeline_emits_progress_and_result_events():
 async def test_pipeline_emits_three_progress_steps():
     events = []
 
-    with patch("services.pipeline.brave_search", new_callable=AsyncMock) as mock_search, \
-         patch("services.pipeline.fetch_all", new_callable=AsyncMock) as mock_fetch, \
-         patch("services.pipeline.verify_claim", new_callable=AsyncMock) as mock_verify:
+    with patch("fact_verifier.services.pipeline.brave_search", new_callable=AsyncMock) as mock_search, \
+         patch("fact_verifier.services.pipeline.fetch_all", new_callable=AsyncMock) as mock_fetch, \
+         patch("fact_verifier.services.pipeline.verify_claim", new_callable=AsyncMock) as mock_verify:
 
         mock_search.return_value = [
             {"url": "https://www.moh.gov.sg/a", "title": "MOH", "snippet": "info"}
@@ -54,7 +54,7 @@ async def test_pipeline_emits_three_progress_steps():
             "sources": [],
         }
 
-        from services.pipeline import run_pipeline
+        from fact_verifier.services.pipeline import run_pipeline
         async for event in run_pipeline("some claim", "en"):
             events.append(event)
 
@@ -69,13 +69,13 @@ async def test_pipeline_emits_three_progress_steps():
 async def test_pipeline_emits_error_on_no_search_results():
     events = []
 
-    with patch("services.pipeline.brave_search", new_callable=AsyncMock) as mock_search, \
-         patch("services.pipeline.fetch_all", new_callable=AsyncMock) as mock_fetch:
+    with patch("fact_verifier.services.pipeline.brave_search", new_callable=AsyncMock) as mock_search, \
+         patch("fact_verifier.services.pipeline.fetch_all", new_callable=AsyncMock) as mock_fetch:
 
         mock_search.return_value = []
         mock_fetch.return_value = []
 
-        from services.pipeline import run_pipeline
+        from fact_verifier.services.pipeline import run_pipeline
         async for event in run_pipeline("obscure claim", "en"):
             events.append(event)
 
@@ -87,9 +87,9 @@ async def test_pipeline_emits_error_on_no_search_results():
 async def test_pipeline_emits_error_on_verify_exception():
     events = []
 
-    with patch("services.pipeline.brave_search", new_callable=AsyncMock) as mock_search, \
-         patch("services.pipeline.fetch_all", new_callable=AsyncMock) as mock_fetch, \
-         patch("services.pipeline.verify_claim", new_callable=AsyncMock) as mock_verify:
+    with patch("fact_verifier.services.pipeline.brave_search", new_callable=AsyncMock) as mock_search, \
+         patch("fact_verifier.services.pipeline.fetch_all", new_callable=AsyncMock) as mock_fetch, \
+         patch("fact_verifier.services.pipeline.verify_claim", new_callable=AsyncMock) as mock_verify:
 
         mock_search.return_value = [
             {"url": "https://www.moh.gov.sg/a", "title": "MOH", "snippet": "info"}
@@ -99,7 +99,7 @@ async def test_pipeline_emits_error_on_verify_exception():
         ]
         mock_verify.side_effect = Exception("OpenAI API error")
 
-        from services.pipeline import run_pipeline
+        from fact_verifier.services.pipeline import run_pipeline
         async for event in run_pipeline("some claim", "en"):
             events.append(event)
 

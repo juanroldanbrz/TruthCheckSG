@@ -83,7 +83,8 @@ textarea:focus { outline: none; border-color: var(--text); }
 .upload-area:hover { border-color: var(--text); }
 .upload-area label { cursor: pointer; color: var(--muted); font-size: 16px; }
 
-#preview-container { position: relative; display: inline-block; }
+#preview-container { position: relative; }
+#preview-container:not([hidden]) { display: inline-block; }
 #image-preview { max-height: 160px; border-radius: 8px; }
 #clear-image {
   position: absolute; top: -8px; right: -8px;

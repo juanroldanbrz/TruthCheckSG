@@ -22,5 +22,8 @@
   "error_empty": "请输入声明或上传图片。",
   "error_generic": "出现错误，请重试。",
   "error_no_text": "无法从图片中提取文字，请重试。",
-  "limited_sources": "找到的来源有限。"
+  "error_not_relevant": "这似乎不是一个可核实的事实声明。请输入您想核查的陈述。",
+  "limited_sources": "找到的来源有限。",
+  "share_button": "复制分享链接",
+  "share_copied": "已复制！"
 }

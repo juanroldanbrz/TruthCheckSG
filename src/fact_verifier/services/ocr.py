@@ -1,6 +1,6 @@
 import base64
 from openai import AsyncOpenAI
-from config import settings
+from fact_verifier.config import settings
 
 client = AsyncOpenAI(api_key=settings.openai_api_key)
 

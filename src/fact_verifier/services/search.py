@@ -1,5 +1,5 @@
 import httpx
-from config import settings
+from fact_verifier.config import settings
 
 BRAVE_SEARCH_URL = "https://api.search.brave.com/res/v1/web/search"
 
@@ -10,7 +10,7 @@ async def brave_search(query: str, count: int = 10) -> list[dict]:
         "Accept-Encoding": "gzip",
         "X-Subscription-Token": settings.brave_api_key,
     }
-    params = {"q": query, "count": count, "search_lang": "en", "country": "SG"}
+    params = {"q": query, "count": count}
 
     try:
         async with httpx.AsyncClient(timeout=15) as client:
