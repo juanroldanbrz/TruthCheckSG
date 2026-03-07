@@ -14,7 +14,7 @@ MOCK_BRAVE_RESPONSE = {
 @pytest.mark.asyncio
 async def test_search_returns_list_of_results():
     mock_response = MagicMock()
-    mock_response.json = AsyncMock(return_value=MOCK_BRAVE_RESPONSE)
+    mock_response.json = MagicMock(return_value=MOCK_BRAVE_RESPONSE)
     mock_response.raise_for_status = MagicMock()
 
     with patch("services.search.httpx.AsyncClient") as mock_client_class:
@@ -36,7 +36,7 @@ async def test_search_returns_list_of_results():
 @pytest.mark.asyncio
 async def test_search_returns_empty_list_on_no_results():
     mock_response = MagicMock()
-    mock_response.json = AsyncMock(return_value={"web": {"results": []}})
+    mock_response.json = MagicMock(return_value={"web": {"results": []}})
     mock_response.raise_for_status = MagicMock()
 
     with patch("services.search.httpx.AsyncClient") as mock_client_class:

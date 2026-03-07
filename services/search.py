@@ -16,7 +16,7 @@ async def brave_search(query: str, count: int = 10) -> list[dict]:
         async with httpx.AsyncClient(timeout=15) as client:
             response = await client.get(BRAVE_SEARCH_URL, headers=headers, params=params)
             response.raise_for_status()
-            data = await response.json()
+            data = response.json()
 
         results = data.get("web", {}).get("results", [])
         return [
