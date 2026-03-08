@@ -18,6 +18,6 @@ class Settings(BaseSettings):
     openai_model: str = "gpt-5-mini-2025-08-07"
     max_output_tokens: int = 5000
 
-    model_config = {"env_file": ".env"}
+    model_config = {"env_file": ".env", "extra": "ignore"}
 
 settings = Settings()
