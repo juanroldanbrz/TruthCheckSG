@@ -15,6 +15,8 @@ A fact-checking web app for Singapore. Submit a claim in text or as a screenshot
 
 ## How it works
 
+> For a detailed breakdown of components, data flow, and external services, see [docs/architecture.md](docs/architecture.md).
+
 1. **Relevancy check** — A GPT-4o call determines if the input is a verifiable factual claim and generates an optimised search query. Non-claims (recipes, questions, opinions) are rejected immediately.
 2. **Search** — Brave Search API finds the top sources.
 3. **Crawl** — Sources are fetched in parallel via Bright Data's unlocker proxy and extracted to plain text.
