@@ -15,6 +15,7 @@ def _load_fact_scenarios() -> list[tuple[str, str]]:
         return [(row["query"], row["result"]) for row in reader]
 
 
+@pytest.mark.fact_checker
 @pytest.mark.parametrize("query,expected_verdict", _load_fact_scenarios())
 @pytest.mark.asyncio
 async def test_fact_check(app_client, query: str, expected_verdict: str):
