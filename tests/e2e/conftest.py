@@ -5,6 +5,9 @@ from httpx import ASGITransport, AsyncClient
 @pytest.fixture
 async def app_client():
     from fact_verifier.main import app
+    from fact_verifier.services.database import connect, disconnect
 
+    await connect()
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         yield client
+    await disconnect()

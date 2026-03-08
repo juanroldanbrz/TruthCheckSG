@@ -32,6 +32,7 @@ markers = [
     "unit: fast isolated service tests",
     "integration: app-level tests that exercise FastAPI routes and flows",
     "e2e: backend end-to-end flow tests",
+    "fact_checker: CSV-driven fact-check scenario tests",
 ]
 
 [build-system]
