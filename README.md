@@ -2,7 +2,16 @@
 
 ![TruthCheckSG](src/fact_verifier/static/logo.png)
 
+[![Live](https://img.shields.io/badge/live-truthchecksg.org-brightgreen?style=flat-square)](https://truthchecksg.org/)
+[![Tests](https://github.com/juanroldanbrz/TruthCheckSG/actions/workflows/e2e.yml/badge.svg)](https://github.com/juanroldanbrz/TruthCheckSG/actions/workflows/e2e.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
+[![Python 3.13](https://img.shields.io/badge/python-3.13-blue?style=flat-square)](https://www.python.org/downloads/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.135+-009688?style=flat-square&logo=fastapi)](https://fastapi.tiangolo.com/)
+[![Powered by GPT-4.1](https://img.shields.io/badge/powered%20by-GPT--4.1-412991?style=flat-square&logo=openai)](https://openai.com/)
+
 A fact-checking web app for Singapore. Submit a claim in text or as a screenshot — the app searches the web, reads the sources, and returns a verdict with evidence. Results are stored in MongoDB and can be shared via a permanent link.
+
+**Try it live at [truthchecksg.org](https://truthchecksg.org/)**
 
 ## How it works
 
@@ -23,7 +32,7 @@ A fact-checking web app for Singapore. Submit a claim in text or as a screenshot
 ## Stack
 
 - **Backend:** FastAPI + SSE (Python 3.13)
-- **AI:** OpenAI GPT-4o with structured output
+- **AI:** OpenAI GPT-4.1 with structured output
 - **Search:** Brave Search API
 - **Crawling:** Bright Data unlocker (parallel)
 - **Database:** MongoDB (Motor async driver)
@@ -80,7 +89,7 @@ Open [http://127.0.0.1:8000](http://127.0.0.1:8000).
 uv run pytest tests/ --ignore=tests/e2e -v
 
 # E2E tests
-uv run pytest tests/e2e/ -v
+uv run pytest tests/e2e -m "not fact_checker" -v
 
 # Fact-checker stage (driven by factscheck.csv)
 uv run pytest -m fact_checker -v
@@ -97,3 +106,7 @@ Singapore has a population of about 5.9 million,true
 ```
 
 Valid verdicts: `true`, `likely_true`, `unverified`, `likely_false`, `false`.
+
+## License
+
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
