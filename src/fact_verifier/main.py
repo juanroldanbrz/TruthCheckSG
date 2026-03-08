@@ -1,9 +1,12 @@
 import asyncio
 import json
+import logging
 import time
 import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 from fastapi import FastAPI, Request, Form, UploadFile, File
 from fastapi.responses import HTMLResponse, JSONResponse, Response
@@ -146,6 +149,7 @@ async def verify(
                         event["image_description"] = image_description
                 await queue.put(event)
         except Exception:
+            logger.exception("Pipeline background task failed")
             await queue.put({"type": "error", "message": "error_generic"})
         finally:
             await queue.put(None)  # sentinel always sent
